@@ -1,0 +1,306 @@
+- First Q&A 
+
+Environnement de développement :
+
+As-tu déjà Laravel installé ? Si oui, quelle version ?
+
+php : Le terme «php» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script ou programme exécutable. Vérifiez l'orthographe du nom, ou si un chemin d'accès existe, 
+vérifiez que le chemin d'accès est correct et réessayez.
+Au caractère Ligne:1 : 1
++ php artisan --version
++ ~~~
+    + CategoryInfo          : ObjectNotFound: (php:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+As-tu déjà configuré React Native sur ta machine ? (Node.js, Android Studio / Xcode, etc.)
+
+Non jamais
+
+Vas-tu développer sous Windows, macOS ou Linux ?
+
+Windows
+
+Structure du projet :
+
+Comptes-tu faire une seule app React Native avec un backend Laravel séparé (API REST) ?
+
+Oui
+
+Veux-tu une base de données MySQL locale pour le développement, puis une en ligne plus tard ?
+
+Oui
+
+Fonctionnalités prioritaires :
+Le sujet décrit :
+
+Informations mensuelles sur le développement
+
+Mouvements appris
+
+Aliments à introduire
+
+Dates de vaccination
+
+Rendez-vous avec le pédiatre
+→ Veux-tu aussi inclure des notifications, des graphiques de croissance, ou un suivi pour plusieurs bébés ?
+
+Suivi pour plusieurs bébé
+
+Délai et scope :
+
+Combien de temps as-tu pour développer ce projet ?
+
+4jours
+
+Est-ce un prototype minimal ou une application complète ?
+
+prototype minimal , tout en ce rappelant que doit developper cela en une app complete
+
+
+----------------------------------------------------------------------------------------------------
+
+📋 RÉCAPITULATIF DU PROJET BABYCHECK
+📅 État d'avancement - Jour 1/4
+✅ CE QUI EST TERMINÉ
+1. ENVIRONNEMENT DE DÉVELOPPEMENT
+Système : Windows avec XAMPP
+
+PHP : 8.2.12 (via XAMPP)
+
+Composer : Installé et fonctionnel
+
+Node.js : Installé (pour React Native)
+
+2. BACKEND LARAVEL (baby-growth-backend/)
+Laravel 12 : Installation complète
+
+Base de données : MySQL configurée (baby_growth_db)
+
+Migrations exécutées :
+
+✅ users (table par défaut Laravel)
+
+✅ personal_access_tokens (Sanctum pour l'authentification API)
+
+✅ babies (gestion des bébés)
+
+✅ growth_records (suivi poids/taille)
+
+✅ vaccinations (calendrier vaccinal)
+
+✅ milestones (étapes de développement)
+
+✅ appointments (rendez-vous pédiatre)
+
+✅ food_introductions (alimentation)
+
+3. API LARAVEL
+Routes API configurées dans routes/api.php
+
+Route de test fonctionnelle : GET /api/test
+
+Authentification : Sanctum installé, contrôleur AuthController créé
+
+Structure d'API : Routes pour register/login/logout prêtes
+
+CORS : Configuré via middleware intégré Laravel 12
+
+4. PROBLÈMES RÉSOLUS
+PHP non reconnu → Ajout de PHP au PATH système
+
+Zip extension manquante → Activée dans php.ini
+
+Routes API 404 → Correction du RouteServiceProvider.php
+
+Dépendances Composer → GitHub token configuré
+
+5. FRONTEND REACT NATIVE (baby-growth-app/)
+Expo CLI : Installé globalement
+
+Projet créé : npx create-expo-app baby-growth-app
+
+Dépendances installées :
+
+@react-navigation/native et @react-navigation/stack
+
+axios pour les appels API
+
+@react-native-async-storage/async-storage
+
+Structure de projet :
+
+text
+baby-growth-app/
+├── src/
+│   ├── screens/
+│   │   └── TestScreen.js
+│   ├── services/
+│   │   ├── api.js
+│   │   └── auth.js
+│   └── navigation/
+├── App.js
+└── package.json
+6. CONNEXION BACKEND-FRONTEND
+Test de connexion : Réussi entre React Native et Laravel
+
+Configuration réseau : IP locale configurée pour le développement mobile
+
+Expo Go : Testé sur téléphone physique avec QR code
+
+⚠️ PROBLÈME EN COURS
+Authentification API - Erreur 500
+Symptôme : POST /api/register retourne 500 Internal Server Error
+
+État actuel :
+
+Base de données OK (tables existent)
+
+Migrations Sanctum exécutées
+
+Connexion DB fonctionnelle
+
+Mode debug activé pour investigation
+
+Diagnostic en cours : Analyse de l'erreur exacte avec APP_DEBUG=true
+
+📁 STRUCTURE DES FICHIERS ACTUELLE
+text
+BabyCheck/
+├── baby-growth-backend/          # API Laravel
+│   ├── app/
+│   │   ├── Http/Controllers/Api/
+│   │   │   └── AuthController.php
+│   │   ├── Models/
+│   │   │   ├── User.php
+│   │   │   ├── Baby.php
+│   │   │   └── ... autres modèles
+│   │   └── Providers/
+│   ├── database/migrations/      # 10 migrations exécutées
+│   ├── routes/api.php           # Routes API complètes
+│   ├── .env                     # Configuration DB + debug
+│   └── artisan
+│
+└── baby-growth-app/             # App React Native
+    ├── src/
+    │   ├── screens/
+    │   │   ├── TestScreen.js
+    │   │   └── LoginScreen.js (en cours)
+    │   ├── services/
+    │   │   ├── api.js
+    │   │   └── auth.js
+    │   └── navigation/
+    ├── App.js
+    └── package.json
+🔧 TECHNOLOGIES UTILISÉES
+Composant	Technologie	Statut
+Backend API	Laravel 12 + Sanctum	✅ Installé
+Base de données	MySQL (XAMPP)	✅ Configuré
+Frontend mobile	React Native + Expo	✅ Installé
+Navigation	React Navigation	✅ Installé
+HTTP Client	Axios	✅ Installé
+Storage local	AsyncStorage	✅ Installé
+🎯 PROCHAINES ÉTAPES (Jours 2-4)
+JOUR 2 : AUTHENTIFICATION & ÉCRANS PRINCIPAUX
+Résoudre l'erreur 500 d'authentification
+
+Finaliser Login/Register screens
+
+Créer Dashboard avec liste des bébés
+
+Implémenter la navigation complète
+
+JOUR 3 : FONCTIONNALITÉS CORE
+CRUD complet pour les bébés
+
+Suivi de croissance (graphiques)
+
+Gestion des vaccinations
+
+Rendez-vous pédiatriques
+
+JOUR 4 : FINALISATION
+Design UI/UX
+
+Gestion des erreurs
+
+Tests complets
+
+Préparation de la démo
+
+📝 POINTS CLÉS À RETENIR
+Architecture : API REST Laravel + App React Native séparées
+
+Authentification : Token-based avec Sanctum
+
+Base de données : MySQL locale, 10 tables créées
+
+Développement mobile : Expo pour test rapide sur téléphone
+
+Problème actuel : Debug de l'erreur 500 sur /api/register
+
+Délai : 3 jours restants pour un prototype minimal complet
+
+🔗 URLS DE TEST
+API Laravel : http://localhost:8000/api/test
+
+Frontend Expo : QR code via npx expo start
+
+phpMyAdmin : http://localhost/phpmyadmin
+
+-----------------------------------------------------------------------------------------------------
+
+📋 RÉSUMÉ DE LA SESSION - PROBLÈME BABYCHECK
+PROBLÈME PRINCIPAL
+Erreur : java.lang.String cannot be cast to java.lang.Boolean sur Android avec React Navigation
+
+CAUSE IDENTIFIÉE
+Problème d'incompatibilité entre :
+
+React Navigation v7+
+
+React Native 0.81.5
+
+Expo 54
+
+Spécifique au contexte Android
+
+SOLUTIONS TENTÉES
+1. CORRECTIONS TECHNIQUES
+✅ APP_KEY Laravel : Résolu erreur 500 (clé manquante)
+
+✅ Sanctum : Ajout de HasApiTokens dans User.php
+
+✅ Authentification API : POST /register et /login fonctionnels
+
+✅ Dépendances circulaires : Résolu import dans auth.js
+
+2. CORRECTIONS REACT NATIVE
+✅ Renommage fichiers : Vérifié exports/imports
+
+✅ Styles : Ajout StyleSheet dans App.js
+
+✅ AsyncStorage : Import manquant ajouté
+
+✅ Navigation simple : Test sans React Navigation → FONCTIONNE
+
+3. TENTATIVES REACT NAVIGATION
+❌ Stack Navigator (@react-navigation/stack) → Erreur persistante
+
+❌ Native Stack (@react-navigation/native-stack) → Même erreur
+
+❌ Simplification options (animation: 'none', gestureEnabled: false) → Échec
+
+❌ Nettoyage AsyncStorage → Impossible (clear() non disponible)
+
+4. TESTS EFFECTUÉS
+✅ App sans navigation → Fonctionne parfaitement
+
+✅ Écrans individuels (Login, Register, Dashboard) → OK sans navigation
+
+✅ Backend Laravel → API 100% fonctionnelle
+
+❌ React Navigation v7 → Échec systématique sur Android
+
+DIAGNOSTIC FINAL
+Le problème est spécifique à React Navigation v7+ avec cette stack technique. L'erreur de cast String/Boolean vient de la couche native Android qui reçoit des props incorrectes.
