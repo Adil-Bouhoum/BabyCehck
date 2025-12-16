@@ -1,0 +1,457 @@
+frontend
+📋 RÉSUMÉ COMPLET DU BACKEND BABYCHECK
+🔗 URL DE BASE
+text
+http://192.168.1.162:8000/api
+🔐 AUTHENTIFICATION
+1. Inscription
+http
+POST /register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "password_confirmation": "password123"
+}
+2. Connexion
+http
+POST /login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+Réponse : Token dans data.token à utiliser dans Authorization: Bearer <token>
+
+3. Infos utilisateur
+http
+GET /user
+Authorization: Bearer <token>
+4. Déconnexion
+http
+POST /logout
+Authorization: Bearer <token>
+👶 GESTION DES BÉBÉS
+1. Liste des bébés
+http
+GET /babies
+Authorization: Bearer <token>
+2. Ajouter un bébé
+http
+POST /babies
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Emma",
+  "birth_date": "2024-01-15",
+  "gender": "female",
+  "birth_weight": 3.2,
+  "birth_height": 50.5,
+  "notes": "Né à 37 semaines"
+}
+3. Voir un bébé
+http
+GET /babies/{id}
+Authorization: Bearer <token>
+4. Modifier un bébé
+http
+PUT /babies/{id}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Emma Updated",
+  "notes": "Premier sourire à 2 mois"
+}
+5. Supprimer un bébé
+http
+DELETE /babies/{id}
+Authorization: Bearer <token>
+⚠️ Attention : Supprime aussi toutes les données associées (mesures, vaccins, etc.)
+
+📊 CROISSANCE & BMI (Pour un bébé spécifique)
+1. Historique des mesures
+http
+GET /babies/{baby_id}/growth-records
+Authorization: Bearer <token>
+2. Ajouter une mesure
+http
+POST /babies/{baby_id}/growth-records
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "weight": 6.5,
+  "height": 65.2,
+  "head_circumference": 42.1,
+  "measurement_date": "2024-03-15",
+  "notes": "Contrôle mensuel"
+}
+3. Statistiques
+http
+GET /babies/{baby_id}/growth-records/stats/summary
+Authorization: Bearer <token>
+Retourne : Dernière mesure + gain poids/taille par mois
+
+4. Historique BMI
+http
+GET /babies/{baby_id}/growth-records/stats/bmi
+Authorization: Bearer <token>
+Retourne : Liste avec BMI calculé pour chaque mesure
+
+💉 VACCINATIONS (Système avancé)
+1. Calendrier vaccinal complet
+http
+GET /babies/{baby_id}/vaccinations/calendar
+Authorization: Bearer <token>
+📋 Retourne :
+
+json
+{
+  "baby_name": "Emma",
+  "baby_age_months": 11,
+  "calendar": [
+    {
+      "standard_vaccine_id": 2,
+      "vaccine_name": "Hexavalent (6-en-1)",
+      "dose_number": 1,
+      "total_doses": 3,
+      "recommended_date": "2024-03-15",
+      "status": "completed",
+      "actual_date": "2024-03-10",
+      "is_mandatory": true,
+      "description": "Diphtérie, Tétanos, Coqueluche..."
+    },
+    {
+      "standard_vaccine_id": 2,
+      "vaccine_name": "Hexavalent (6-en-1)",
+      "dose_number": 2,
+      "total_doses": 3,
+      "recommended_date": "2024-04-15",
+      "status": "overdue",
+      "actual_date": null,
+      "is_mandatory": true
+    }
+  ]
+}
+2. Vaccins recommandés (pour âge actuel)
+http
+GET /babies/{baby_id}/vaccinations/recommended
+Authorization: Bearer <token>
+3. Ajouter un vaccin standard
+http
+POST /babies/{baby_id}/vaccinations/from-standard
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "standard_vaccine_id": 2,
+  "vaccination_date": "2024-03-10",
+  "dose_number": 1,
+  "notes": "Bonne tolérance"
+}
+4. Ajouter un vaccin personnalisé
+http
+POST /babies/{baby_id}/vaccinations
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "vaccine_name": "Vaccin spécial",
+  "vaccination_date": "2024-03-10",
+  "due_date": "2024-06-10",
+  "status": "completed",
+  "notes": "Vaccin non standard"
+}
+5. Liste des vaccins administrés
+http
+GET /babies/{baby_id}/vaccinations
+Authorization: Bearer <token>
+6. Modifier/Supprimer un vaccin
+http
+PUT /babies/{baby_id}/vaccinations/{vaccination_id}
+DELETE /babies/{baby_id}/vaccinations/{vaccination_id}
+🤒 DOSSIERS MÉDICAUX (Maladies & Médicaments)
+1. Liste des dossiers
+http
+GET /babies/{baby_id}/medical-records
+Authorization: Bearer <token>
+2. Ajouter une maladie/médicament
+http
+POST /babies/{baby_id}/medical-records
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "condition": "Otite moyenne",
+  "diagnosis_date": "2024-02-20",
+  "medication": "Amoxicilline",
+  "dosage": "250mg 2x/jour",
+  "notes": "Fièvre à 39°C",
+  "status": "resolved"
+}
+3. Modifier/Supprimer
+http
+PUT /babies/{baby_id}/medical-records/{record_id}
+DELETE /babies/{baby_id}/medical-records/{record_id}
+🍎 PLANNING REPAS
+1. Tous les repas
+http
+GET /babies/{baby_id}/meal-plans
+Authorization: Bearer <token>
+2. Repas d'une journée spécifique
+http
+GET /babies/{baby_id}/meal-plans/day/2024-03-15
+Authorization: Bearer <token>
+📋 Retourne groupé par type :
+
+json
+{
+  "breakfast": [
+    {
+      "meal_type": "breakfast",
+      "food_name": "Purée carotte",
+      "quantity": "150g"
+    }
+  ],
+  "lunch": [...],
+  "snack": [...],
+  "dinner": [...]
+}
+3. Ajouter un repas
+http
+POST /babies/{baby_id}/meal-plans
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "meal_date": "2024-03-15",
+  "meal_type": "breakfast",
+  "food_name": "Purée carotte",
+  "quantity": "150g",
+  "notes": "A bien mangé"
+}
+4. Modifier/Supprimer un repas
+http
+PUT /babies/{baby_id}/meal-plans/{meal_id}
+DELETE /babies/{baby_id}/meal-plans/{meal_id}
+📊 STATISTIQUES GLOBALES (Bonus - à implémenter si besoin)
+1. Vue d'ensemble bébé
+http
+GET /babies/{baby_id}/dashboard
+Authorization: Bearer <token>
+Retournerait :
+
+Dernière mesure
+
+Prochain vaccin
+
+Dernière maladie
+
+Prochain repas programmé
+
+🎨 STRUCTURE DES DONNÉES
+Bébé (Baby)
+json
+{
+  "id": 1,
+  "user_id": 1,
+  "name": "Emma",
+  "birth_date": "2024-01-15",
+  "gender": "female",
+  "birth_weight": 3.2,
+  "birth_height": 50.5,
+  "notes": "Premier bébé",
+  "created_at": "2024-01-15T10:00:00.000000Z",
+  "updated_at": "2024-01-15T10:00:00.000000Z",
+  "age_months": 11
+}
+Mesure (GrowthRecord)
+json
+{
+  "id": 1,
+  "baby_id": 1,
+  "weight": 6.5,
+  "height": 65.2,
+  "head_circumference": 42.1,
+  "measurement_date": "2024-03-15",
+  "notes": "Contrôle mensuel",
+  "created_at": "...",
+  "updated_at": "...",
+  "bmi": 15.3
+}
+Vaccin (Vaccination)
+json
+{
+  "id": 1,
+  "baby_id": 1,
+  "standard_vaccine_id": 2,
+  "vaccine_name": "Hexavalent (6-en-1)",
+  "vaccination_date": "2024-03-10",
+  "due_date": null,
+  "dose_number": 1,
+  "status": "completed",
+  "notes": "Bonne tolérance",
+  "lot_number": "ABC123",
+  "clinic": "Hôpital Saint-Louis",
+  "created_at": "...",
+  "updated_at": "...",
+  "is_custom": false,
+  "full_name": "Hexavalent (6-en-1) (Dose 1/3)"
+}
+Dossier Médical (MedicalRecord)
+json
+{
+  "id": 1,
+  "baby_id": 1,
+  "condition": "Otite moyenne",
+  "diagnosis_date": "2024-02-20",
+  "medication": "Amoxicilline",
+  "dosage": "250mg 2x/jour",
+  "notes": "Fièvre à 39°C",
+  "status": "resolved",
+  "created_at": "...",
+  "updated_at": "..."
+}
+Repas (MealPlan)
+json
+{
+  "id": 1,
+  "baby_id": 1,
+  "meal_date": "2024-03-15",
+  "meal_type": "breakfast",
+  "food_name": "Purée carotte",
+  "quantity": "150g",
+  "notes": "A bien mangé",
+  "created_at": "...",
+  "updated_at": "..."
+}
+🚀 FLUX RECOMMANDÉ POUR LE FRONTEND
+1. Authentification
+javascript
+// 1. Login → Sauvegarder token
+// 2. Configurer axios avec header Authorization
+2. Dashboard initial
+javascript
+// 1. GET /babies → Liste bébés
+// 2. Pour chaque bébé : GET /babies/{id}/dashboard (si implémenté)
+3. Écran bébé
+javascript
+// Onglet 1: Croissance
+// - GET /babies/{id}/growth-records
+// - GET /babies/{id}/growth-records/stats/bmi
+
+// Onglet 2: Vaccination  
+// - GET /babies/{id}/vaccinations/calendar
+// - GET /babies/{id}/vaccinations/recommended
+
+// Onglet 3: Santé
+// - GET /babies/{id}/medical-records
+
+// Onglet 4: Nutrition
+// - GET /babies/{id}/meal-plans
+// - GET /babies/{id}/meal-plans/day/{today}
+⚠️ POINTS IMPORTANTS POUR LE FRONTEND
+Headers obligatoires
+javascript
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer <token>"
+}
+Gestion des erreurs
+json
+// Succès
+{
+  "status": "success",
+  "message": "...",
+  "data": {...}
+}
+
+// Erreur
+{
+  "status": "error",
+  "message": "...",
+  "errors": {...}  // Optionnel
+}
+Dates
+Format: YYYY-MM-DD partout
+
+Timezone: UTC (géré automatiquement par Laravel)
+
+Statuts vaccins
+scheduled : Programmé
+
+completed : Administré
+
+overdue : En retard
+
+Types repas
+breakfast : Petit-déjeuner
+
+lunch : Déjeuner
+
+snack : Goûter
+
+dinner : Dîner
+
+📱 EXEMPLE DE REQUÊTE FRONTEND
+javascript
+// Configuration axios
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://192.168.1.162:8000/api',
+  timeout: 10000,
+});
+
+// Intercepteur pour ajouter le token
+api.interceptors.request.use(config => {
+  const token = await AsyncStorage.getItem('@auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Exemple: Récupérer calendrier vaccinal
+const fetchVaccineCalendar = async (babyId) => {
+  try {
+    const response = await api.get(`/babies/${babyId}/vaccinations/calendar`);
+    return response.data.data.calendar;
+  } catch (error) {
+    console.error('Erreur:', error.response?.data || error.message);
+    throw error;
+  }
+};
+🎯 PRIORITÉS DE DÉVELOPPEMENT FRONTEND
+Écran Login/Register (existe déjà)
+
+Dashboard avec liste bébés (existe partiellement)
+
+Écran ajout bébé (nouveau)
+
+Écran détail bébé avec onglets (nouveau)
+
+Onglet Croissance (graphiques BMI)
+
+Onglet Vaccination (calendrier intelligent)
+
+Onglet Santé (liste maladies)
+
+Onglet Nutrition (planning repas)
+
+🔗 RÉSUMÉ DES ENDPOINTS CLÉS
+Fonctionnalité	GET	POST	PUT	DELETE
+Bébés	/babies	/babies	/babies/{id}	/babies/{id}
+Mesures	/babies/{id}/growth-records	/babies/{id}/growth-records	/babies/{id}/growth-records/{record_id}	/babies/{id}/growth-records/{record_id}
+BMI	/babies/{id}/growth-records/stats/bmi	-	-	-
+Calendrier vaccins	/babies/{id}/vaccinations/calendar	-	-	-
+Vaccins admin.	/babies/{id}/vaccinations	/babies/{id}/vaccinations	/babies/{id}/vaccinations/{id}	/babies/{id}/vaccinations/{id}
+Dossiers méd.	/babies/{id}/medical-records	/babies/{id}/medical-records	/babies/{id}/medical-records/{id}	/babies/{id}/medical-records/{id}
+Repas journée	/babies/{id}/meal-plans/day/{date}	-	-	-
+Tous repas	/babies/{id}/meal-plans	/babies/{id}/meal-plans	/babies/{id}/meal-plans/{id}	/babies/{id}/meal-plans/{id}
