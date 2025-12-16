@@ -1,36 +1,42 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Request;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BabyController;
 
+// Route de test
 Route::get('/test', function () {
     return response()->json([
         'status' => 'success',
-        'message' => 'API fonctionne!',
+        'message' => 'API BabyCheck fonctionne!',
         'timestamp' => now()
     ]);
 });
 
-Route::fallback(function () {
-    return response()->json(['error' => 'Route non trouvée'], 404);
+// Authentification (publiques)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+// Routes protégées par authentification
+Route::middleware('auth:sanctum')->group(function () {
+    // Authentification
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Gestion des bébés (CRUD)
+    Route::apiResource('babies', BabyController::class);
+
+    // Routes futures (à développer)
+    // Route::apiResource('babies.growth-records', GrowthRecordController::class);
+    // Route::apiResource('babies.vaccinations', VaccinationController::class);
+    // Route::apiResource('babies.medical-records', MedicalRecordController::class);
+    // Route::apiResource('babies.meal-plans', MealPlanController::class);
 });
 
-// Authentification
-Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
-Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-
-// Routes protégées (nécessitent un token)
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', [App\Http\Controllers\Api\AuthController::class, 'user']);
-    Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
-
-    // TEST route protégée
-    Route::get('/protected-test', function (Request $request) {
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Vous êtes authentifié!',
-            'user_id' => $request->user()->id,
-            'user_name' => $request->user()->name
-        ]);
-    });
+// Fallback pour routes non trouvées
+Route::fallback(function () {
+    return response()->json([
+        'error' => 'Route non trouvée',
+        'message' => 'Vérifiez l\'URL de votre requête'
+    ], 404);
 });

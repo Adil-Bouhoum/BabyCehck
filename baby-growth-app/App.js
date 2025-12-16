@@ -9,6 +9,8 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import TestConnectionScreen from "./src/screens/TestConnectionScreen";
+import AddBabyScreen from "./src/screens/AddBabyScreen";
+import BabyDetailScreen from "./src/screens/BabyDetailScreen";
 
 // Créer le navigateur avec Stack Navigator v6
 const Stack = createStackNavigator();
@@ -79,7 +81,7 @@ export default function App() {
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}
-          options={{
+          options={({ navigation }) => ({
             headerShown: true,
             title: "Mes Bébés",
             headerStyle: {
@@ -89,10 +91,47 @@ export default function App() {
             headerTitleStyle: {
               fontWeight: "bold",
             },
-            // Pas de bouton retour (user doit logout)
+            // Bouton de retour pour les écrans enfants
             headerLeft: () => null,
             gestureEnabled: false,
+          })}
+        />
+
+        <Stack.Screen
+          name="AddBaby"
+          component={AddBabyScreen}
+          options={{
+            headerShown: true,
+            title: "Ajouter un bébé",
+            headerStyle: {
+              backgroundColor: "#3498db",
+            },
+            headerTintColor: "#fff",
+            headerTitleStyle: {
+              fontWeight: "bold",
+            },
+            // Permettre le bouton retour
+            headerLeft: null,
+            gestureEnabled: true,
           }}
+        />
+
+        <Stack.Screen
+          name="BabyDetail"
+          component={BabyDetailScreen}
+          options={({ route }) => ({
+            headerShown: true,
+            title: route.params?.babyName || "Détails bébé",
+            headerStyle: {
+              backgroundColor: "#3498db",
+            },
+            headerTintColor: "#fff",
+            headerTitleStyle: {
+              fontWeight: "bold",
+            },
+            // Permettre le bouton retour
+            gestureEnabled: true,
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>
