@@ -60,10 +60,7 @@ export default function DashboardScreen({ navigation }) {
 
   const handleLogout = () => {
     Alert.alert("Déconnexion", "Voulez-vous vraiment vous déconnecter ?", [
-      {
-        text: "Annuler",
-        style: "cancel",
-      },
+      { text: "Annuler", style: "cancel" },
       {
         text: "Déconnexion",
         style: "destructive",
@@ -90,18 +87,12 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const formatAge = (months) => {
-    if (months < 1) {
-      return "Nouveau-né";
-    } else if (months < 24) {
-      return `${months} mois`;
-    } else {
-      const years = Math.floor(months / 12);
-      const remainingMonths = months % 12;
-      if (remainingMonths === 0) {
-        return `${years} an${years > 1 ? "s" : ""}`;
-      }
-      return `${years} an${years > 1 ? "s" : ""} ${remainingMonths} mois`;
-    }
+    if (months < 1) return "Nouveau-né";
+    if (months < 24) return `${months} mois`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    if (remainingMonths === 0) return `${years} an${years > 1 ? "s" : ""}`;
+    return `${years} an${years > 1 ? "s" : ""} ${remainingMonths} mois`;
   };
 
   const getGenderIcon = (gender) => {
@@ -117,7 +108,6 @@ export default function DashboardScreen({ navigation }) {
 
   const renderBabyItem = ({ item }) => {
     const ageInMonths = calculateAgeInMonths(item.birth_date);
-
     return (
       <TouchableOpacity
         style={styles.babyCard}
@@ -133,7 +123,6 @@ export default function DashboardScreen({ navigation }) {
             {getGenderIcon(item.gender)}
           </Text>
         </View>
-
         <View style={styles.babyInfo}>
           <Text style={styles.babyName}>{item.name}</Text>
           <Text style={styles.babyDetails}>
@@ -150,7 +139,6 @@ export default function DashboardScreen({ navigation }) {
             </Text>
           )}
         </View>
-
         <View style={styles.babyArrow}>
           <Text style={styles.arrow}>›</Text>
         </View>
@@ -171,100 +159,78 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>👋 Bonjour {user?.name || ""}!</Text>
-          {user && (
-            <View style={styles.userCard}>
-              <Text style={styles.userEmail}>{user.email}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Section Bébés */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🍼 Mes bébés</Text>
-            <Text style={styles.babyCount}>({babies.length})</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>👋 Bonjour {user?.name || ""}!</Text>
+        {user && (
+          <View style={styles.userCard}>
+            <Text style={styles.userEmail}>{user.email}</Text>
           </View>
+        )}
+      </View>
 
-          {babies.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>👶</Text>
-              <Text style={styles.emptyTitle}>Aucun bébé enregistré</Text>
-              <Text style={styles.emptyText}>
-                Commencez par ajouter votre premier bébé pour suivre sa
-                croissance
-              </Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => navigation.navigate("AddBaby")}
-              >
-                <Text style={styles.addButtonText}>+ Ajouter un bébé</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              <FlatList
-                data={babies}
-                renderItem={renderBabyItem}
-                keyExtractor={(item) => item.id.toString()}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    colors={["#3498db"]}
-                    tintColor="#3498db"
-                  />
-                }
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContainer}
-              />
-
-              <TouchableOpacity
-                style={styles.addButtonSmall}
-                onPress={() => navigation.navigate("AddBaby")}
-              >
-                <Text style={styles.addButtonSmallText}>
-                  + Ajouter un autre bébé
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>🍼 Mes bébés</Text>
+          <Text style={styles.babyCount}>({babies.length})</Text>
         </View>
 
-        {/* Bouton Déconnexion */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>🔓 Déconnexion</Text>
-        </TouchableOpacity>
+        {babies.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>👶</Text>
+            <Text style={styles.emptyTitle}>Aucun bébé enregistré</Text>
+            <Text style={styles.emptyText}>
+              Commencez par ajouter votre premier bébé pour suivre sa croissance
+            </Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate("AddBaby")}
+            >
+              <Text style={styles.addButtonText}>+ Ajouter un bébé</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            style={{ flex: 1 }}
+            data={babies}
+            renderItem={renderBabyItem}
+            keyExtractor={(item) => item.id.toString()}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#3498db"]}
+                tintColor="#3498db"
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 10 }}
+          />
+        )}
+
+        {babies.length > 0 && (
+          <TouchableOpacity
+            style={styles.addButtonSmall}
+            onPress={() => navigation.navigate("AddBaby")}
+          >
+            <Text style={styles.addButtonSmallText}>
+              + Ajouter un autre bébé
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>🔓 Déconnexion</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    color: "#7f8c8d",
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  header: {
-    marginBottom: 25,
-  },
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 10, color: "#7f8c8d", fontSize: 14 },
+  header: { marginBottom: 15, paddingHorizontal: 20 },
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -281,13 +247,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  userEmail: {
-    fontSize: 14,
-    color: "#7f8c8d",
-  },
-  section: {
-    flex: 1,
-  },
+  userEmail: { fontSize: 14, color: "#7f8c8d" },
+  section: { flex: 1, paddingHorizontal: 20 },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -299,11 +260,7 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginRight: 10,
   },
-  babyCount: {
-    fontSize: 16,
-    color: "#3498db",
-    fontWeight: "600",
-  },
+  babyCount: { fontSize: 16, color: "#3498db", fontWeight: "600" },
   emptyState: {
     backgroundColor: "white",
     padding: 40,
@@ -315,10 +272,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 15,
-  },
+  emptyEmoji: { fontSize: 48, marginBottom: 15 },
   emptyTitle: {
     fontSize: 20,
     fontWeight: "bold",
@@ -338,11 +292,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 10,
   },
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  addButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
   addButtonSmall: {
     backgroundColor: "#3498db",
     padding: 15,
@@ -350,14 +300,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 15,
   },
-  addButtonSmallText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  listContainer: {
-    paddingBottom: 10,
-  },
+  addButtonSmallText: { color: "white", fontSize: 14, fontWeight: "bold" },
   babyCard: {
     flexDirection: "row",
     backgroundColor: "white",
@@ -380,45 +323,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 15,
   },
-  babyAvatarText: {
-    fontSize: 24,
-  },
-  babyInfo: {
-    flex: 1,
-  },
+  babyAvatarText: { fontSize: 24 },
+  babyInfo: { flex: 1 },
   babyName: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#2c3e50",
     marginBottom: 4,
   },
-  babyDetails: {
-    fontSize: 13,
-    color: "#7f8c8d",
-    marginBottom: 2,
-  },
-  babyStats: {
-    fontSize: 12,
-    color: "#3498db",
-    fontWeight: "500",
-  },
-  babyArrow: {
-    marginLeft: 10,
-  },
-  arrow: {
-    fontSize: 24,
-    color: "#bdc3c7",
-  },
+  babyDetails: { fontSize: 13, color: "#7f8c8d", marginBottom: 2 },
+  babyStats: { fontSize: 12, color: "#3498db", fontWeight: "500" },
+  babyArrow: { marginLeft: 10 },
+  arrow: { fontSize: 24, color: "#bdc3c7" },
   logoutButton: {
     backgroundColor: "#e74c3c",
     padding: 18,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 20,
+    marginHorizontal: 20,
+    marginBottom: 10,
   },
-  logoutButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  logoutButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });

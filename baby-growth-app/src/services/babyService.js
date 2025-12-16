@@ -6,9 +6,10 @@ export const babyService = {
   async getBabies() {
     try {
       const response = await api.get("/babies");
+      // ✅ CORRECTION: data.data au lieu de data.babies
       return {
         success: true,
-        babies: response.data.babies || [],
+        babies: response.data.data || response.data.babies || [],
       };
     } catch (error) {
       console.error("❌ Erreur getBabies:", error);
@@ -25,7 +26,7 @@ export const babyService = {
       const response = await api.post("/babies", babyData);
       return {
         success: true,
-        baby: response.data.baby,
+        baby: response.data.data || response.data.baby,
         message: response.data.message,
       };
     } catch (error) {
@@ -44,7 +45,7 @@ export const babyService = {
       const response = await api.get(`/babies/${babyId}`);
       return {
         success: true,
-        baby: response.data.baby,
+        baby: response.data.data || response.data.baby,
       };
     } catch (error) {
       console.error("❌ Erreur getBabyDetails:", error);
@@ -61,7 +62,7 @@ export const babyService = {
       const response = await api.put(`/babies/${babyId}`, babyData);
       return {
         success: true,
-        baby: response.data.baby,
+        baby: response.data.data || response.data.baby,
         message: response.data.message,
       };
     } catch (error) {
@@ -100,7 +101,7 @@ export const babyService = {
       );
       return {
         success: true,
-        record: response.data.record,
+        record: response.data.data || response.data.record,
         message: response.data.message,
       };
     } catch (error) {
@@ -119,7 +120,7 @@ export const babyService = {
       const response = await api.get(`/babies/${babyId}/growth-records`);
       return {
         success: true,
-        records: response.data.records || [],
+        records: response.data.data || response.data.records || [],
       };
     } catch (error) {
       console.error("❌ Erreur getGrowthRecords:", error);
@@ -139,7 +140,7 @@ export const babyService = {
       );
       return {
         success: true,
-        record: response.data.record,
+        record: response.data.data || response.data.record,
         message: response.data.message,
       };
     } catch (error) {
@@ -158,7 +159,7 @@ export const babyService = {
       const response = await api.get(`/babies/${babyId}/medical-records`);
       return {
         success: true,
-        records: response.data.records || [],
+        records: response.data.data || response.data.records || [],
       };
     } catch (error) {
       console.error("❌ Erreur getMedicalRecords:", error);
@@ -175,7 +176,7 @@ export const babyService = {
       const response = await api.post(`/babies/${babyId}/meal-plans`, mealData);
       return {
         success: true,
-        meal: response.data.meal,
+        meal: response.data.data || response.data.meal,
         message: response.data.message,
       };
     } catch (error) {
@@ -194,13 +195,47 @@ export const babyService = {
       const response = await api.get(`/babies/${babyId}/meal-plans`);
       return {
         success: true,
-        meals: response.data.meals || [],
+        meals: response.data.data || response.data.meals || [],
       };
     } catch (error) {
       console.error("❌ Erreur getMealPlans:", error);
       return {
         success: false,
         message: error.response?.data?.message || "Erreur de chargement",
+      };
+    }
+  },
+
+  // Supprimer une mesure de croissance
+  async deleteGrowthRecord(babyId, recordId) {
+    try {
+      await api.delete(`/babies/${babyId}/growth-records/${recordId}`);
+      return {
+        success: true,
+        message: "Mesure supprimée avec succès",
+      };
+    } catch (error) {
+      console.error("❌ Erreur deleteGrowthRecord:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Erreur de suppression",
+      };
+    }
+  },
+
+  // Supprimer un plan de repas
+  async deleteMealPlan(babyId, mealId) {
+    try {
+      await api.delete(`/babies/${babyId}/meal-plans/${mealId}`);
+      return {
+        success: true,
+        message: "Repas supprimé avec succès",
+      };
+    } catch (error) {
+      console.error("❌ Erreur deleteMealPlan:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Erreur de suppression",
       };
     }
   },

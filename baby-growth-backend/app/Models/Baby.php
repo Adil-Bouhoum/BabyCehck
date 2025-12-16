@@ -62,6 +62,10 @@ class Baby extends Model
         return $this->hasMany(Milestone::class);
     }
 
+    public function getAgeInMonths(): int
+    {
+        return $this->birth_date->diffInMonths(now());
+    }
     // Accesseurs (helpers)
     public function getAgeInMonthsAttribute(): int
     {

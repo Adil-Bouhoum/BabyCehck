@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BabyController;
+use App\Http\Controllers\Api\GrowthController;
+use App\Http\Controllers\Api\VaccinationController;
+use App\Http\Controllers\Api\MedicalRecordController;
+use App\Http\Controllers\Api\MealPlanController;
 
 // Route de test
 Route::get('/test', function () {
@@ -26,11 +30,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // Gestion des bébés (CRUD)
     Route::apiResource('babies', BabyController::class);
 
-    // Routes futures (à développer)
-    // Route::apiResource('babies.growth-records', GrowthRecordController::class);
-    // Route::apiResource('babies.vaccinations', VaccinationController::class);
-    // Route::apiResource('babies.medical-records', MedicalRecordController::class);
-    // Route::apiResource('babies.meal-plans', MealPlanController::class);
+    // Routes imbriquées pour chaque bébé
+    Route::prefix('babies/{baby}')->group(function () {
+        // Croissance (poids/taille/BMI)
+        Route::apiResource('growth-records', GrowthController::class);
+        Route::get('growth-records/stats/summary', [GrowthController::class, 'summary']);
+        Route::get('growth-records/stats/bmi', [GrowthController::class, 'bmiHistory']);
+
+        // Vaccinations
+        Route::apiResource('vaccinations', VaccinationController::class);
+        Route::get('vaccinations/calendar', [VaccinationController::class, 'calendar']);
+
+        // Dossiers médicaux
+        Route::apiResource('medical-records', MedicalRecordController::class);
+        Route::get('medical-records/stats', [MedicalRecordController::class, 'stats']);
+
+        // Planning repas
+        Route::apiResource('meal-plans', MealPlanController::class);
+        Route::get('meal-plans/day/{date}', [MealPlanController::class, 'getByDate']);
+    });
 });
 
 // Fallback pour routes non trouvées

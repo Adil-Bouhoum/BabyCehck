@@ -1,25 +1,26 @@
-// App.js - REACT NAVIGATION V6 (STACK NAVIGATOR)
+// baby-growth-app/App.js
 import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 
-// Importez vos écrans existants
+// Écrans
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import TestConnectionScreen from "./src/screens/TestConnectionScreen";
 import AddBabyScreen from "./src/screens/AddBabyScreen";
 import BabyDetailScreen from "./src/screens/BabyDetailScreen";
+import AddGrowthScreen from "./src/screens/AddGrowthScreen";
+import AddMealScreen from "./src/screens/AddMealScreen";
+import EditBabyScreen from "./src/screens/EditBabyScreen";
 
-// Créer le navigateur avec Stack Navigator v6
 const Stack = createStackNavigator();
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Court délai pour le splash screen
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -40,9 +41,6 @@ export default function App() {
         initialRouteName="Login"
         screenOptions={{
           headerShown: false,
-          // Options simplifiées pour éviter les problèmes
-          animationEnabled: false,
-          gestureEnabled: false,
         }}
       >
         <Stack.Screen
@@ -54,13 +52,7 @@ export default function App() {
           }}
         />
 
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
+        <Stack.Screen name="Login" component={LoginScreen} />
 
         <Stack.Screen
           name="Register"
@@ -68,33 +60,24 @@ export default function App() {
           options={{
             headerShown: true,
             title: "Inscription",
-            headerStyle: {
-              backgroundColor: "#3498db",
-            },
+            headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
+            headerTitleStyle: { fontWeight: "bold" },
           }}
         />
 
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}
-          options={({ navigation }) => ({
+          options={{
             headerShown: true,
             title: "Mes Bébés",
-            headerStyle: {
-              backgroundColor: "#3498db",
-            },
+            headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
-            // Bouton de retour pour les écrans enfants
+            headerTitleStyle: { fontWeight: "bold" },
             headerLeft: () => null,
             gestureEnabled: false,
-          })}
+          }}
         />
 
         <Stack.Screen
@@ -103,16 +86,9 @@ export default function App() {
           options={{
             headerShown: true,
             title: "Ajouter un bébé",
-            headerStyle: {
-              backgroundColor: "#3498db",
-            },
+            headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
-            // Permettre le bouton retour
-            headerLeft: null,
-            gestureEnabled: true,
+            headerTitleStyle: { fontWeight: "bold" },
           }}
         />
 
@@ -122,16 +98,46 @@ export default function App() {
           options={({ route }) => ({
             headerShown: true,
             title: route.params?.babyName || "Détails bébé",
-            headerStyle: {
-              backgroundColor: "#3498db",
-            },
+            headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
-            headerTitleStyle: {
-              fontWeight: "bold",
-            },
-            // Permettre le bouton retour
-            gestureEnabled: true,
+            headerTitleStyle: { fontWeight: "bold" },
           })}
+        />
+
+        <Stack.Screen
+          name="AddGrowth"
+          component={AddGrowthScreen}
+          options={{
+            headerShown: true,
+            title: "Ajouter une mesure",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          }}
+        />
+
+        <Stack.Screen
+          name="AddMeal"
+          component={AddMealScreen}
+          options={{
+            headerShown: true,
+            title: "Ajouter un repas",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          }}
+        />
+
+        <Stack.Screen
+          name="EditBaby"
+          component={EditBabyScreen}
+          options={{
+            headerShown: true,
+            title: "Modifier le bébé",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

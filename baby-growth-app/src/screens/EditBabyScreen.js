@@ -1,5 +1,5 @@
-// baby-growth-app/src/screens/AddBabyScreen.js
-import React, { useState } from "react";
+// baby-growth-app/src/screens/EditBabyScreen.js
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,19 +9,19 @@ import {
   Alert,
   ScrollView,
   SafeAreaView,
-  Platform,
 } from "react-native";
 import { babyService } from "../services/babyService";
 
-export default function AddBabyScreen({ navigation }) {
+export default function EditBabyScreen({ navigation, route }) {
+  const { baby } = route.params;
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    birth_date: new Date().toISOString().split("T")[0], // Date du jour
-    gender: "male",
-    birth_weight: "",
-    birth_height: "",
-    notes: "",
+    name: baby.name || "",
+    birth_date: baby.birth_date?.split("T")[0] || "",
+    gender: baby.gender || "male",
+    birth_weight: baby.birth_weight?.toString() || "",
+    birth_height: baby.birth_height?.toString() || "",
+    notes: baby.notes || "",
   });
 
   const validateForm = () => {
@@ -36,34 +36,69 @@ export default function AddBabyScreen({ navigation }) {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleUpdate = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      const result = await babyService.addBaby(form);
+      const result = await babyService.updateBaby(baby.id, form);
 
       if (result.success) {
-        Alert.alert("Succès", "Bébé ajouté avec succès!", [
+        Alert.alert("Succès", "Bébé modifié avec succès!", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
           },
         ]);
       } else {
-        let errorMessage = result.message || "Erreur lors de l'ajout";
-        if (result.errors) {
-          const firstError = Object.values(result.errors)[0][0];
-          errorMessage = firstError;
-        }
-        Alert.alert("Erreur", errorMessage);
+        Alert.alert(
+          "Erreur",
+          result.message || "Erreur lors de la modification"
+        );
       }
     } catch (error) {
-      console.error("Erreur ajout bébé:", error);
+      console.error("Erreur modification bébé:", error);
       Alert.alert("Erreur", "Une erreur est survenue");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Supprimer le bébé",
+      `Êtes-vous sûr de vouloir supprimer ${baby.name} ?\n\nToutes les données associées (mesures, repas, etc.) seront également supprimées.`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const result = await babyService.deleteBaby(baby.id);
+              if (result.success) {
+                Alert.alert("Succès", "Bébé supprimé avec succès", [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      navigation.navigate("Dashboard");
+                    },
+                  },
+                ]);
+              } else {
+                Alert.alert("Erreur", result.message);
+              }
+            } catch (error) {
+              console.error("Erreur suppression:", error);
+              Alert.alert("Erreur", "Impossible de supprimer le bébé");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -73,14 +108,11 @@ export default function AddBabyScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Ajouter un bébé</Text>
-          <Text style={styles.subtitle}>
-            Remplissez les informations de votre bébé
-          </Text>
+          <Text style={styles.title}>Modifier le bébé</Text>
+          <Text style={styles.subtitle}>{baby.name}</Text>
         </View>
 
         <View style={styles.form}>
-          {/* Nom */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nom du bébé *</Text>
             <TextInput
@@ -93,7 +125,6 @@ export default function AddBabyScreen({ navigation }) {
             />
           </View>
 
-          {/* Date de naissance */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Date de naissance *</Text>
             <TextInput
@@ -103,10 +134,9 @@ export default function AddBabyScreen({ navigation }) {
               onChangeText={(text) => setForm({ ...form, birth_date: text })}
               editable={!loading}
             />
-            <Text style={styles.hint}>Format: AAAA-MM-JJ (ex: 2024-12-16)</Text>
+            <Text style={styles.hint}>Format: AAAA-MM-JJ</Text>
           </View>
 
-          {/* Genre */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Genre *</Text>
             <View style={styles.genderContainer}>
@@ -136,10 +166,9 @@ export default function AddBabyScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Poids et taille de naissance */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-              <Text style={styles.label}>Poids de naissance (kg)</Text>
+              <Text style={styles.label}>Poids naissance (kg)</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 3.5"
@@ -150,11 +179,10 @@ export default function AddBabyScreen({ navigation }) {
                 keyboardType="decimal-pad"
                 editable={!loading}
               />
-              <Text style={styles.hint}>Optionnel (0.5 - 10 kg)</Text>
             </View>
 
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Taille de naissance (cm)</Text>
+              <Text style={styles.label}>Taille naissance (cm)</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Ex: 52"
@@ -165,16 +193,14 @@ export default function AddBabyScreen({ navigation }) {
                 keyboardType="decimal-pad"
                 editable={!loading}
               />
-              <Text style={styles.hint}>Optionnel (30 - 70 cm)</Text>
             </View>
           </View>
 
-          {/* Notes */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Notes (optionnel)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Allergies, particularités, antécédents familiaux..."
+              placeholder="Allergies, particularités..."
               value={form.notes}
               onChangeText={(text) => setForm({ ...form, notes: text })}
               multiline
@@ -182,20 +208,24 @@ export default function AddBabyScreen({ navigation }) {
               editable={!loading}
               maxLength={500}
             />
-            <Text style={styles.charCount}>
-              {form.notes.length}/500 caractères
-            </Text>
           </View>
 
-          {/* Boutons */}
           <TouchableOpacity
             style={[styles.submitButton, loading && styles.buttonDisabled]}
-            onPress={handleSubmit}
+            onPress={handleUpdate}
             disabled={loading}
           >
             <Text style={styles.submitButtonText}>
-              {loading ? "Ajout en cours..." : "Ajouter le bébé"}
+              {loading ? "Modification..." : "Enregistrer les modifications"}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            disabled={loading}
+          >
+            <Text style={styles.deleteButtonText}>🗑️ Supprimer le bébé</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -212,30 +242,16 @@ export default function AddBabyScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  scrollContainer: { flexGrow: 1, padding: 20 },
+  header: { alignItems: "center", marginBottom: 30 },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#2c3e50",
     marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#7f8c8d",
-    textAlign: "center",
-    lineHeight: 22,
-  },
+  subtitle: { fontSize: 16, color: "#7f8c8d" },
   form: {
     backgroundColor: "white",
     padding: 25,
@@ -246,15 +262,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2c3e50",
-    marginBottom: 8,
-  },
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: "600", color: "#2c3e50", marginBottom: 8 },
   input: {
     borderWidth: 1.5,
     borderColor: "#e0e0e0",
@@ -264,30 +273,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fcfcfc",
     color: "#333",
   },
-  hint: {
-    fontSize: 12,
-    color: "#95a5a6",
-    marginTop: 5,
-    marginLeft: 5,
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-  charCount: {
-    fontSize: 12,
-    color: "#bdc3c7",
-    textAlign: "right",
-    marginTop: 5,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  genderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
+  hint: { fontSize: 12, color: "#95a5a6", marginTop: 5, marginLeft: 5 },
+  textArea: { minHeight: 100, textAlignVertical: "top" },
+  row: { flexDirection: "row", justifyContent: "space-between" },
+  genderContainer: { flexDirection: "row", justifyContent: "space-between" },
   genderButton: {
     flex: 1,
     padding: 14,
@@ -298,49 +287,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
     backgroundColor: "#fcfcfc",
   },
-  genderButtonActive: {
-    backgroundColor: "#3498db",
-    borderColor: "#3498db",
-  },
-  genderText: {
-    fontSize: 14,
-    color: "#7f8c8d",
-    fontWeight: "500",
-  },
-  genderTextActive: {
-    color: "white",
-    fontWeight: "600",
-  },
+  genderButtonActive: { backgroundColor: "#3498db", borderColor: "#3498db" },
+  genderText: { fontSize: 14, color: "#7f8c8d", fontWeight: "500" },
+  genderTextActive: { color: "white", fontWeight: "600" },
   submitButton: {
-    backgroundColor: "#2ecc71",
+    backgroundColor: "#3498db",
     paddingVertical: 18,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
     marginBottom: 15,
-    shadowColor: "#2ecc71",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  buttonDisabled: {
-    backgroundColor: "#bdc3c7",
-    shadowColor: "transparent",
-  },
-  submitButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  cancelButton: {
-    padding: 15,
+  buttonDisabled: { backgroundColor: "#bdc3c7" },
+  submitButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
+  deleteButton: {
+    backgroundColor: "#e74c3c",
+    paddingVertical: 18,
+    borderRadius: 10,
     alignItems: "center",
+    marginBottom: 15,
   },
-  cancelButtonText: {
-    color: "#e74c3c",
-    fontSize: 16,
-    fontWeight: "500",
-  },
+  deleteButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
+  cancelButton: { padding: 15, alignItems: "center" },
+  cancelButtonText: { color: "#7f8c8d", fontSize: 16, fontWeight: "500" },
 });
