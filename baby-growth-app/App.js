@@ -1,19 +1,35 @@
-// baby-growth-app/App.js
+// baby-growth-app/App.js (Updated)
 import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 
-// Écrans
+// Écrans - Authentification
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
+
+// Écrans - Dashboard et bébés
 import DashboardScreen from "./src/screens/DashboardScreen";
-import TestConnectionScreen from "./src/screens/TestConnectionScreen";
 import AddBabyScreen from "./src/screens/AddBabyScreen";
-import BabyDetailScreen from "./src/screens/BabyDetailScreen";
-import AddGrowthScreen from "./src/screens/AddGrowthScreen";
-import AddMealScreen from "./src/screens/AddMealScreen";
 import EditBabyScreen from "./src/screens/EditBabyScreen";
+import BabyDetailScreen from "./src/screens/BabyDetailScreen";
+
+// Écrans - Croissance
+import AddGrowthScreen from "./src/screens/AddGrowthScreen";
+
+// Écrans - Vaccinations
+import VaccinationScreen from "./src/screens/VaccinationScreen";
+import AddVaccinationScreen from "./src/screens/AddVaccinationScreen";
+
+// Écrans - Santé / Dossiers médicaux
+import MedicalRecordsScreen from "./src/screens/MedicalRecordsScreen.js";
+import AddMedicalRecordScreen from "./src/screens/AddMedicalRecordScreen.js";
+
+// Écrans - Repas
+import AddMealScreen from "./src/screens/AddMealScreen";
+
+// Écrans - Tests (optionnel)
+import TestConnectionScreen from "./src/screens/TestConnectionScreen";
 
 const Stack = createStackNavigator();
 
@@ -43,6 +59,7 @@ export default function App() {
           headerShown: false,
         }}
       >
+        {/* ============= AUTHENTIFICATION ============= */}
         <Stack.Screen
           name="TestConnection"
           component={TestConnectionScreen}
@@ -66,6 +83,7 @@ export default function App() {
           }}
         />
 
+        {/* ============= DASHBOARD ============= */}
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}
@@ -80,6 +98,7 @@ export default function App() {
           }}
         />
 
+        {/* ============= GESTION DES BÉBÉS ============= */}
         <Stack.Screen
           name="AddBaby"
           component={AddBabyScreen}
@@ -105,6 +124,19 @@ export default function App() {
         />
 
         <Stack.Screen
+          name="EditBaby"
+          component={EditBabyScreen}
+          options={{
+            headerShown: true,
+            title: "Modifier le bébé",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          }}
+        />
+
+        {/* ============= CROISSANCE ============= */}
+        <Stack.Screen
           name="AddGrowth"
           component={AddGrowthScreen}
           options={{
@@ -116,24 +148,63 @@ export default function App() {
           }}
         />
 
+        {/* ============= VACCINATIONS ============= */}
         <Stack.Screen
-          name="AddMeal"
-          component={AddMealScreen}
+          name="Vaccination"
+          component={VaccinationScreen}
+          options={({ route }) => ({
+            headerShown: true,
+            title: "💉 Vaccinations",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          })}
+        />
+
+        <Stack.Screen
+          name="AddVaccination"
+          component={AddVaccinationScreen}
           options={{
             headerShown: true,
-            title: "Ajouter un repas",
+            title: "Ajouter une vaccination",
             headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
             headerTitleStyle: { fontWeight: "bold" },
           }}
         />
 
+        {/* ============= SANTÉ / DOSSIERS MÉDICAUX ============= */}
         <Stack.Screen
-          name="EditBaby"
-          component={EditBabyScreen}
+          name="MedicalRecords"
+          component={MedicalRecordsScreen}
+          options={({ route }) => ({
+            headerShown: true,
+            title: "🏥 Santé",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          })}
+        />
+
+        <Stack.Screen
+          name="AddMedicalRecord"
+          component={AddMedicalRecordScreen}
           options={{
             headerShown: true,
-            title: "Modifier le bébé",
+            title: "Nouveau dossier médical",
+            headerStyle: { backgroundColor: "#3498db" },
+            headerTintColor: "#fff",
+            headerTitleStyle: { fontWeight: "bold" },
+          }}
+        />
+
+        {/* ============= REPAS ============= */}
+        <Stack.Screen
+          name="AddMeal"
+          component={AddMealScreen}
+          options={{
+            headerShown: true,
+            title: "Ajouter un repas",
             headerStyle: { backgroundColor: "#3498db" },
             headerTintColor: "#fff",
             headerTitleStyle: { fontWeight: "bold" },

@@ -1,11 +1,10 @@
-// baby-growth-app/src/screens/BabyDetailScreen.js
+// baby-growth-app/src/screens/BabyDetailScreen.js (Fixed)
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
@@ -15,6 +14,8 @@ import { babyService } from "../services/babyService";
 const TABS = [
   { id: "overview", label: "Vue d'ensemble", icon: "📊" },
   { id: "growth", label: "Croissance", icon: "📈" },
+  { id: "vaccinations", label: "Vaccins", icon: "💉" },
+  { id: "health", label: "Santé", icon: "🏥" },
   { id: "meals", label: "Repas", icon: "🍎" },
 ];
 
@@ -142,28 +143,17 @@ const GrowthTab = ({ baby, navigation, onRefresh }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              // Appel API à implémenter dans le service
-              const response = await fetch(
-                `http://192.168.1.162:8000/api/babies/${baby.id}/growth-records/${recordId}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${await import(
-                      "@react-native-async-storage/async-storage"
-                    ).then((m) => m.default.getItem("@auth_token"))}`,
-                  },
-                }
+              const result = await babyService.deleteGrowthRecord(
+                baby.id,
+                recordId
               );
-              if (response.ok) {
+              if (result.success) {
                 Alert.alert("Succès", "Mesure supprimée");
                 loadGrowthRecords();
                 onRefresh();
-              } else {
-                Alert.alert("Erreur", "Impossible de supprimer");
               }
             } catch (error) {
               console.error("Erreur suppression:", error);
-              Alert.alert("Erreur", "Une erreur est survenue");
             }
           },
         },
@@ -221,8 +211,13 @@ const GrowthTab = ({ baby, navigation, onRefresh }) => {
                 <Text style={styles.recordText}>
                   Taille: {record.height} cm
                 </Text>
+                {record.head_circumference && (
+                  <Text style={styles.recordText}>
+                    PC: {record.head_circumference} cm
+                  </Text>
+                )}
                 {record.bmi && (
-                  <Text style={styles.recordText}>BMI: {record.bmi}</Text>
+                  <Text style={styles.recordText}>IMC: {record.bmi}</Text>
                 )}
               </View>
               {record.notes && (
@@ -235,6 +230,52 @@ const GrowthTab = ({ baby, navigation, onRefresh }) => {
     </ScrollView>
   );
 };
+
+// Tab: Vaccinations
+const VaccinationsTab = ({ baby, navigation }) => (
+  <View style={styles.tabContent}>
+    <TouchableOpacity
+      style={styles.addButton}
+      onPress={() =>
+        navigation.navigate("Vaccination", {
+          babyId: baby.id,
+          babyName: baby.name,
+        })
+      }
+    >
+      <Text style={styles.addButtonText}>Voir le calendrier vaccinal</Text>
+    </TouchableOpacity>
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>💉 Calendrier vaccinal</Text>
+      <Text style={styles.infoText}>
+        Consultez et gérez le calendrier vaccinal complet de {baby.name}
+      </Text>
+    </View>
+  </View>
+);
+
+// Tab: Santé
+const HealthTab = ({ baby, navigation }) => (
+  <View style={styles.tabContent}>
+    <TouchableOpacity
+      style={styles.addButton}
+      onPress={() =>
+        navigation.navigate("MedicalRecords", {
+          babyId: baby.id,
+          babyName: baby.name,
+        })
+      }
+    >
+      <Text style={styles.addButtonText}>Voir l'historique médical</Text>
+    </TouchableOpacity>
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>🏥 Santé et médical</Text>
+      <Text style={styles.infoText}>
+        Enregistrez les maladies, médicaments et consultations médicales
+      </Text>
+    </View>
+  </View>
+);
 
 // Tab: Repas
 const MealsTab = ({ baby, navigation, onRefresh }) => {
@@ -269,27 +310,14 @@ const MealsTab = ({ baby, navigation, onRefresh }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await fetch(
-                `http://192.168.1.162:8000/api/babies/${baby.id}/meal-plans/${mealId}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${await import(
-                      "@react-native-async-storage/async-storage"
-                    ).then((m) => m.default.getItem("@auth_token"))}`,
-                  },
-                }
-              );
-              if (response.ok) {
+              const result = await babyService.deleteMealPlan(baby.id, mealId);
+              if (result.success) {
                 Alert.alert("Succès", "Repas supprimé");
                 loadMeals();
                 onRefresh();
-              } else {
-                Alert.alert("Erreur", "Impossible de supprimer");
               }
             } catch (error) {
               console.error("Erreur suppression:", error);
-              Alert.alert("Erreur", "Une erreur est survenue");
             }
           },
         },
@@ -445,6 +473,10 @@ export default function BabyDetailScreen({ navigation, route }) {
             onRefresh={loadBabyDetails}
           />
         );
+      case "vaccinations":
+        return <VaccinationsTab baby={baby} navigation={navigation} />;
+      case "health":
+        return <HealthTab baby={baby} navigation={navigation} />;
       case "meals":
         return (
           <MealsTab
@@ -460,60 +492,100 @@ export default function BabyDetailScreen({ navigation, route }) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3498db" />
           <Text style={styles.loadingText}>Chargement...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabsContainer}
-      >
-        {TABS.map((tab) => (
-          <TabButton
-            key={tab.id}
-            tab={tab}
-            isActive={activeTab === tab.id}
-            onPress={setActiveTab}
-          />
-        ))}
-      </ScrollView>
+    <View style={styles.container}>
+      <View style={styles.tabsWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabsContainer}
+          contentContainerStyle={styles.tabsContent}
+        >
+          {TABS.map((tab) => (
+            <TabButton
+              key={tab.id}
+              tab={tab}
+              isActive={activeTab === tab.id}
+              onPress={setActiveTab}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       <View style={styles.content}>{renderTabContent()}</View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 10, color: "#7f8c8d", fontSize: 14 },
-  tabsContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#7f8c8d",
+    fontSize: 14,
+  },
+  tabsWrapper: {
     backgroundColor: "white",
     borderBottomWidth: 1,
     borderBottomColor: "#ecf0f1",
+  },
+  tabsContainer: {
+    flexGrow: 0,
+  },
+  tabsContent: {
     paddingHorizontal: 10,
+    paddingVertical: 10,
+    flexDirection: "row",
   },
   tabButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginRight: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 8,
     alignItems: "center",
-    minWidth: 100,
+    minWidth: 75,
   },
-  tabButtonActive: { borderBottomWidth: 3, borderBottomColor: "#3498db" },
-  tabIcon: { fontSize: 20, marginBottom: 5 },
-  tabLabel: { fontSize: 12, color: "#95a5a6", fontWeight: "500" },
-  tabLabelActive: { color: "#3498db", fontWeight: "bold" },
-  content: { flex: 1 },
-  tabContent: { flex: 1, padding: 20 },
+  tabButtonActive: {
+    borderBottomWidth: 3,
+    borderBottomColor: "#3498db",
+  },
+  tabIcon: {
+    fontSize: 20,
+    marginBottom: 5,
+  },
+  tabLabel: {
+    fontSize: 11,
+    color: "#95a5a6",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  tabLabelActive: {
+    color: "#3498db",
+    fontWeight: "bold",
+  },
+  content: {
+    flex: 1,
+  },
+  tabContent: {
+    flex: 1,
+    padding: 20,
+  },
   card: {
     backgroundColor: "white",
     padding: 20,
@@ -531,6 +603,11 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginBottom: 15,
   },
+  infoText: {
+    fontSize: 14,
+    color: "#7f8c8d",
+    lineHeight: 20,
+  },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -539,9 +616,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f1f2f6",
   },
-  infoLabel: { fontSize: 14, color: "#7f8c8d", fontWeight: "500" },
-  infoValue: { fontSize: 14, color: "#2c3e50", fontWeight: "600" },
-  notesText: { fontSize: 14, color: "#2c3e50", lineHeight: 20 },
+  infoLabel: {
+    fontSize: 14,
+    color: "#7f8c8d",
+    fontWeight: "500",
+  },
+  infoValue: {
+    fontSize: 14,
+    color: "#2c3e50",
+    fontWeight: "600",
+  },
+  notesText: {
+    fontSize: 14,
+    color: "#2c3e50",
+    lineHeight: 20,
+  },
   editButton: {
     backgroundColor: "#3498db",
     padding: 15,
@@ -549,7 +638,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  editButtonText: { color: "white", fontSize: 14, fontWeight: "bold" },
+  editButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   addButton: {
     backgroundColor: "#2ecc71",
     padding: 15,
@@ -557,7 +650,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  addButtonText: { color: "white", fontSize: 14, fontWeight: "bold" },
+  addButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   emptyState: {
     backgroundColor: "white",
     padding: 40,
@@ -569,14 +666,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  emptyEmoji: { fontSize: 48, marginBottom: 15 },
+  emptyEmoji: {
+    fontSize: 48,
+    marginBottom: 15,
+  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#2c3e50",
     marginBottom: 10,
   },
-  emptyText: { fontSize: 14, color: "#95a5a6", textAlign: "center" },
+  emptyText: {
+    fontSize: 14,
+    color: "#95a5a6",
+    textAlign: "center",
+  },
   recordItem: {
     backgroundColor: "#f8f9fa",
     padding: 15,
@@ -589,7 +693,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-  recordDate: { fontSize: 12, color: "#3498db", fontWeight: "600" },
+  recordDate: {
+    fontSize: 12,
+    color: "#3498db",
+    fontWeight: "600",
+  },
   recordDetails: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -607,8 +715,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: "italic",
   },
-  deleteIcon: { padding: 5 },
-  deleteIconText: { fontSize: 20 },
+  deleteIcon: {
+    padding: 5,
+  },
+  deleteIconText: {
+    fontSize: 20,
+  },
   mealItem: {
     backgroundColor: "#f8f9fa",
     padding: 15,
@@ -621,17 +733,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  mealHeaderLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  mealIcon: { fontSize: 24, marginRight: 10 },
-  mealInfo: { flex: 1 },
-  mealType: { fontSize: 14, fontWeight: "600", color: "#2c3e50" },
-  mealDate: { fontSize: 12, color: "#7f8c8d" },
+  mealHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  mealIcon: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  mealType: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2c3e50",
+  },
+  mealDate: {
+    fontSize: 12,
+    color: "#7f8c8d",
+  },
   mealFood: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#2c3e50",
     marginBottom: 5,
   },
-  mealQuantity: { fontSize: 12, color: "#3498db", marginBottom: 5 },
-  mealNotes: { fontSize: 12, color: "#7f8c8d", fontStyle: "italic" },
+  mealQuantity: {
+    fontSize: 12,
+    color: "#3498db",
+    marginBottom: 5,
+  },
+  mealNotes: {
+    fontSize: 12,
+    color: "#7f8c8d",
+    fontStyle: "italic",
+  },
 });
