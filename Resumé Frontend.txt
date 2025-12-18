@@ -1,0 +1,13 @@
+✅ Complete User Flow:
+
+Login/Register
+Dashboard (list of babies)
+Add new baby
+Edit baby info
+View detailed baby info with 5 tabs
+Add growth measurements
+Add vaccinations (standard or custom)
+View vaccination calendar
+Add medical records
+View medical history
+Add meal plans

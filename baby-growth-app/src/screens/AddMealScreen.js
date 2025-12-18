@@ -11,7 +11,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { babyService } from "../services/babyService";
-
+import DatePickerField from "../components/DatePickerField";
 export default function AddMealScreen({ navigation, route }) {
   const { babyId, babyName } = route.params;
   const [loading, setLoading] = useState(false);
@@ -76,15 +76,15 @@ export default function AddMealScreen({ navigation, route }) {
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="AAAA-MM-JJ"
+            <DatePickerField
+              label="Date"
               value={form.meal_date}
-              onChangeText={(text) => setForm({ ...form, meal_date: text })}
+              onChange={(date) => setForm({ ...form, meal_date: date })}
+              placeholder="Sélectionner une date..."
+              required={true}
               editable={!loading}
+              maxDate={new Date()} // Can't add meals in the future
             />
-            <Text style={styles.hint}>Format: AAAA-MM-JJ (ex: 2024-12-16)</Text>
           </View>
 
           <View style={styles.inputGroup}>

@@ -37,10 +37,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('growth-records/stats/summary', [GrowthController::class, 'summary']);
         Route::get('growth-records/stats/bmi', [GrowthController::class, 'bmiHistory']);
 
-        // Vaccinations - Custom routes BEFORE resource to avoid conflicts
+        // Vaccinations - IMPORTANT: Custom routes BEFORE apiResource
         Route::get('vaccinations/calendar', [VaccinationController::class, 'calendar']);
         Route::get('vaccinations/recommended', [VaccinationController::class, 'recommended']);
         Route::post('vaccinations/from-standard', [VaccinationController::class, 'addFromStandard']);
+        // UPDATE STATUS - This must be before apiResource to avoid conflicts
+        Route::patch('vaccinations/{vaccination}/status', [VaccinationController::class, 'updateStatus']);
+
+        // Standard resource routes (after custom routes)
         Route::apiResource('vaccinations', VaccinationController::class);
 
         // Medical records

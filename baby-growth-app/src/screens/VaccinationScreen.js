@@ -8,207 +8,164 @@ import {
   SafeAreaView,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
   FlatList,
 } from "react-native";
-import { babyService } from "../services/babyService";
+
+// Components
+import VaccinationStatusModal from "../components/VaccinationStatusModal";
+import VaccinationCalendarItem from "../components/VaccinationCalendarItem";
+import VaccinationListItem from "../components/VaccinationListItem";
+
+// Hooks
+import { useVaccinationLogic } from "../hooks/useVaccinationLogic";
+
+// Utils
+import {
+  getStatusColor,
+  getStatusLabel,
+  formatStatusUpdateData,
+  validateStatusForm,
+  initializeStatusForm,
+  resetStatusForm,
+} from "../utils/vaccinationUtils";
 
 const VaccinationScreen = ({ route, navigation }) => {
   const { babyId, babyName } = route.params;
-  const [calendar, setCalendar] = useState([]);
-  const [recommended, setRecommended] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("calendar"); // calendar or list
 
+  // Vaccination logic
+  const {
+    calendar,
+    recommended,
+    loading,
+    updating,
+    loadVaccinationData,
+    updateVaccinationStatus,
+    deleteVaccination,
+  } = useVaccinationLogic(babyId);
+
+  // Modal state
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [selectedVaccination, setSelectedVaccination] = useState(null);
+  const [statusForm, setStatusForm] = useState(resetStatusForm());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerType, setDatePickerType] = useState("vaccination_date");
+
+  // UI state
+  const [activeTab, setActiveTab] = useState("calendar");
+
+  // Load data on mount
   useEffect(() => {
     loadVaccinationData();
   }, []);
 
-  const loadVaccinationData = async () => {
-    setLoading(true);
-    try {
-      const calendarResult = await babyService.getVaccinationCalendar(babyId);
-      const recommendedResult = await babyService.getRecommendedVaccinations(
-        babyId
-      );
+  /**
+   * Open status modal for a vaccination
+   */
+  const openStatusModal = (vaccination) => {
+    setSelectedVaccination(vaccination);
+    setStatusForm(initializeStatusForm(vaccination));
+    setStatusModalVisible(true);
+  };
 
-      if (calendarResult.success) {
-        setCalendar(calendarResult.calendar || []);
-      }
-      if (recommendedResult.success) {
-        setRecommended(recommendedResult.recommended || []);
-      }
-    } catch (error) {
-      console.error("Erreur chargement vaccinations:", error);
-      Alert.alert("Erreur", "Impossible de charger les vaccinations");
-    } finally {
-      setLoading(false);
+  /**
+   * Close status modal and reset
+   */
+  const closeStatusModal = () => {
+    setStatusModalVisible(false);
+    setSelectedVaccination(null);
+    setStatusForm(resetStatusForm());
+  };
+
+  /**
+   * Handle status change
+   */
+  const handleStatusChange = (newStatus) => {
+    setStatusForm({ ...statusForm, status: newStatus });
+  };
+
+  /**
+   * Handle notes change
+   */
+  const handleNotesChange = (text) => {
+    setStatusForm({ ...statusForm, notes: text });
+  };
+
+  /**
+   * Handle date picker open
+   */
+  const handleDatePress = (type) => {
+    setDatePickerType(type);
+    setShowDatePicker(true);
+  };
+
+  /**
+   * Handle date change from picker
+   */
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+
+    if (event.type === "dismissed") {
+      return;
+    }
+
+    if (selectedDate) {
+      const dateString = selectedDate.toISOString().split("T")[0];
+      setStatusForm({
+        ...statusForm,
+        [datePickerType]: dateString,
+      });
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "completed":
-        return "#2ecc71";
-      case "overdue":
-        return "#e74c3c";
-      case "scheduled":
-        return "#f39c12";
-      default:
-        return "#95a5a6";
+  /**
+   * Handle confirm status update
+   */
+  const handleConfirm = async () => {
+    const validation = validateStatusForm(statusForm);
+    if (!validation.valid) {
+      Alert.alert("Erreur", validation.error);
+      return;
     }
-  };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case "completed":
-        return "✅ Effectué";
-      case "overdue":
-        return "⚠️ En retard";
-      case "scheduled":
-        return "📅 Programmé";
-      default:
-        return status;
-    }
-  };
-
-  const handleAddVaccination = () => {
-    navigation.navigate("AddVaccination", {
-      babyId,
-      babyName,
-      onVaccinationAdded: loadVaccinationData,
-    });
-  };
-
-  const handleDeleteVaccination = (vaccinationId) => {
-    Alert.alert(
-      "Supprimer la vaccination",
-      "Êtes-vous sûr de vouloir supprimer cette vaccination ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const result = await babyService.deleteVaccination(
-                babyId,
-                vaccinationId
-              );
-              if (result.success) {
-                Alert.alert("Succès", "Vaccination supprimée");
-                loadVaccinationData();
-              } else {
-                Alert.alert("Erreur", "Impossible de supprimer");
-              }
-            } catch (error) {
-              console.error("Erreur suppression:", error);
-              Alert.alert("Erreur", "Une erreur est survenue");
-            }
-          },
-        },
-      ]
+    const updateData = formatStatusUpdateData(statusForm);
+    const result = await updateVaccinationStatus(
+      selectedVaccination,
+      updateData
     );
+
+    if (result.success) {
+      closeStatusModal();
+    }
   };
 
+  /**
+   * Render calendar items
+   */
   const renderCalendarItem = ({ item }) => (
-    <View style={styles.calendarItem}>
-      <View style={styles.calendarItemLeft}>
-        <View
-          style={[
-            styles.statusIndicator,
-            { backgroundColor: getStatusColor(item.status) },
-          ]}
-        />
-        <View style={styles.calendarItemInfo}>
-          <Text style={styles.vaccineName}>{item.vaccine_name}</Text>
-          <Text style={styles.vaccineDetails}>
-            Dose {item.dose_number}/{item.total_doses}
-          </Text>
-          <Text style={styles.vaccineDate}>
-            📅 Prévue:{" "}
-            {new Date(item.recommended_date).toLocaleDateString("fr-FR")}
-          </Text>
-          {item.actual_date && (
-            <Text style={styles.vaccineDate}>
-              ✅ Administrée:{" "}
-              {new Date(item.actual_date).toLocaleDateString("fr-FR")}
-            </Text>
-          )}
-          {item.is_mandatory && (
-            <Text style={styles.mandatory}>⚖️ Obligatoire</Text>
-          )}
-        </View>
-      </View>
-      <View style={styles.statusBadge}>
-        <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
-      </View>
-    </View>
+    <VaccinationCalendarItem
+      item={item}
+      onStatusPress={openStatusModal}
+      getStatusColor={getStatusColor}
+      getStatusLabel={getStatusLabel}
+    />
   );
 
-  const renderVaccinationListItem = ({ item }) => (
-    <View style={styles.listItem}>
-      <View style={styles.listItemHeader}>
-        <View style={styles.listItemTitle}>
-          <Text style={styles.listItemName}>{item.vaccine_name}</Text>
-          {item.dose_number && (
-            <Text style={styles.listItemDose}>
-              Dose {item.dose_number}
-              {item.total_doses ? `/${item.total_doses}` : ""}
-            </Text>
-          )}
-        </View>
-        <TouchableOpacity
-          onPress={() => handleDeleteVaccination(item.id)}
-          style={styles.deleteButton}
-        >
-          <Text style={styles.deleteButtonText}>🗑️</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.listItemDetails}>
-        {item.vaccination_date && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Date:</Text>
-            <Text style={styles.detailValue}>
-              {new Date(item.vaccination_date).toLocaleDateString("fr-FR")}
-            </Text>
-          </View>
-        )}
-        {item.due_date && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Prochaine:</Text>
-            <Text style={styles.detailValue}>
-              {new Date(item.due_date).toLocaleDateString("fr-FR")}
-            </Text>
-          </View>
-        )}
-        {item.status && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Statut:</Text>
-            <Text style={styles.detailValue}>
-              {getStatusLabel(item.status)}
-            </Text>
-          </View>
-        )}
-        {item.lot_number && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Lot:</Text>
-            <Text style={styles.detailValue}>{item.lot_number}</Text>
-          </View>
-        )}
-        {item.clinic && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Lieu:</Text>
-            <Text style={styles.detailValue}>{item.clinic}</Text>
-          </View>
-        )}
-      </View>
-
-      {item.notes && <Text style={styles.itemNotes}>📝 {item.notes}</Text>}
-    </View>
+  /**
+   * Render list items
+   */
+  const renderListItem = ({ item }) => (
+    <VaccinationListItem
+      item={item}
+      onEditPress={openStatusModal}
+      onDeletePress={deleteVaccination}
+      getStatusColor={getStatusColor}
+      getStatusLabel={getStatusLabel}
+    />
   );
 
+  /**
+   * Render empty state
+   */
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyEmoji}>💉</Text>
@@ -232,7 +189,7 @@ const VaccinationScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Tab Selector */}
+      {/* Tabs */}
       <View style={styles.tabSelector}>
         <TouchableOpacity
           style={[
@@ -258,15 +215,21 @@ const VaccinationScreen = ({ route, navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Add Vaccination Button */}
+        {/* Add Button */}
         <TouchableOpacity
           style={styles.addButton}
-          onPress={handleAddVaccination}
+          onPress={() =>
+            navigation.navigate("AddVaccination", {
+              babyId,
+              babyName,
+              onVaccinationAdded: loadVaccinationData,
+            })
+          }
         >
           <Text style={styles.addButtonText}>+ Ajouter une vaccination</Text>
         </TouchableOpacity>
 
-        {/* Calendar Tab */}
+        {/* Calendar View */}
         {activeTab === "calendar" && (
           <View>
             {calendar.length === 0 ? (
@@ -279,7 +242,11 @@ const VaccinationScreen = ({ route, navigation }) => {
                   data={calendar}
                   renderItem={renderCalendarItem}
                   keyExtractor={(item, index) =>
-                    `${item.standard_vaccine_id}-${item.dose_number}-${index}`
+                    item.id
+                      ? `calendar-${item.id}`
+                      : `calendar-${item.vaccine_id || "custom"}-${
+                          item.dose_number
+                        }-${index}`
                   }
                 />
               </View>
@@ -287,7 +254,7 @@ const VaccinationScreen = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* List Tab */}
+        {/* List View */}
         {activeTab === "list" && (
           <View>
             {calendar.length === 0 ? (
@@ -300,8 +267,14 @@ const VaccinationScreen = ({ route, navigation }) => {
                 <FlatList
                   scrollEnabled={false}
                   data={calendar}
-                  renderItem={renderVaccinationListItem}
-                  keyExtractor={(item, index) => `vaccine-${item.id}-${index}`}
+                  renderItem={renderListItem}
+                  keyExtractor={(item, index) =>
+                    item.id
+                      ? `list-${item.id}`
+                      : `list-${item.vaccine_id || "custom"}-${
+                          item.dose_number
+                        }-${index}`
+                  }
                 />
               </View>
             )}
@@ -330,6 +303,22 @@ const VaccinationScreen = ({ route, navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Status Modal */}
+      <VaccinationStatusModal
+        visible={statusModalVisible}
+        vaccination={selectedVaccination}
+        statusForm={statusForm}
+        updating={updating}
+        showDatePicker={showDatePicker}
+        datePickerType={datePickerType}
+        onStatusChange={handleStatusChange}
+        onNotesChange={handleNotesChange}
+        onDatePress={handleDatePress}
+        onDateChange={handleDateChange}
+        onConfirm={handleConfirm}
+        onCancel={closeStatusModal}
+      />
     </SafeAreaView>
   );
 };
@@ -353,8 +342,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   tabButtonActive: { borderBottomColor: "#3498db" },
-  tabButtonText: { fontSize: 13, fontWeight: "600", color: "#7f8c8d" },
-  tabButtonActive: { color: "#3498db" },
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#7f8c8d",
+  },
   scrollContent: { padding: 20, paddingBottom: 30 },
   addButton: {
     backgroundColor: "#2ecc71",
@@ -381,63 +373,6 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginBottom: 15,
   },
-  calendarItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ecf0f1",
-  },
-  calendarItemLeft: { flexDirection: "row", flex: 1 },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 8,
-    marginRight: 12,
-  },
-  calendarItemInfo: { flex: 1 },
-  vaccineName: { fontSize: 14, fontWeight: "600", color: "#2c3e50" },
-  vaccineDetails: { fontSize: 12, color: "#7f8c8d", marginTop: 3 },
-  vaccineDate: { fontSize: 11, color: "#3498db", marginTop: 2 },
-  mandatory: {
-    fontSize: 11,
-    color: "#e74c3c",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  statusBadge: {
-    backgroundColor: "#ecf0f1",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  statusText: { fontSize: 10, fontWeight: "600", color: "#7f8c8d" },
-  listItem: {
-    backgroundColor: "#f8f9fa",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#3498db",
-  },
-  listItemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 10,
-  },
-  listItemTitle: { flex: 1 },
-  listItemName: { fontSize: 15, fontWeight: "bold", color: "#2c3e50" },
-  listItemDose: { fontSize: 12, color: "#3498db", marginTop: 3 },
-  deleteButton: { padding: 5 },
-  deleteButtonText: { fontSize: 18 },
-  listItemDetails: { marginBottom: 10 },
-  detailRow: { flexDirection: "row", marginBottom: 6 },
-  detailLabel: { fontSize: 12, color: "#7f8c8d", width: 70 },
-  detailValue: { fontSize: 12, color: "#2c3e50", fontWeight: "500", flex: 1 },
-  itemNotes: { fontSize: 12, color: "#7f8c8d", fontStyle: "italic" },
   recommendedItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,

@@ -14,7 +14,7 @@ import {
   Modal,
 } from "react-native";
 import { babyService } from "../services/babyService";
-
+import DatePickerField from "../components/DatePickerField";
 // Standard vaccines list (from backend)
 const STANDARD_VACCINES = [
   { id: 1, name: "BCG", doses: 1 },
@@ -252,19 +252,16 @@ export default function AddVaccinationScreen({ navigation, route }) {
 
           {/* Vaccination Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date de vaccination *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="AAAA-MM-JJ"
+            <DatePickerField
+              label="Date de vaccination"
               value={form.vaccination_date}
-              onChangeText={(text) =>
-                setForm({ ...form, vaccination_date: text })
-              }
+              onChange={(date) => setForm({ ...form, vaccination_date: date })}
+              placeholder="Sélectionner une date..."
+              required={true}
               editable={!loading}
+              maxDate={new Date()} // Can't vaccinate in the future
             />
-            <Text style={styles.hint}>Format: AAAA-MM-JJ (ex: 2024-12-16)</Text>
           </View>
-
           {/* Due Date (Custom only) */}
           {isCustom && (
             <View style={styles.inputGroup}>

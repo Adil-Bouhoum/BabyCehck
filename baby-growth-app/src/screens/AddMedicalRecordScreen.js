@@ -11,7 +11,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { babyService } from "../services/babyService";
-
+import DatePickerField from "../components/DatePickerField";
 export default function AddMedicalRecordScreen({ navigation, route }) {
   const { babyId, babyName, onRecordAdded } = route.params;
   const [loading, setLoading] = useState(false);
@@ -93,19 +93,16 @@ export default function AddMedicalRecordScreen({ navigation, route }) {
 
           {/* Diagnosis Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date du diagnostic *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="AAAA-MM-JJ"
+            <DatePickerField
+              label="Date du diagnostic"
               value={form.diagnosis_date}
-              onChangeText={(text) =>
-                setForm({ ...form, diagnosis_date: text })
-              }
+              onChange={(date) => setForm({ ...form, diagnosis_date: date })}
+              placeholder="Sélectionner une date..."
+              required={true}
               editable={!loading}
+              maxDate={new Date()} // Can't diagnose in the future
             />
-            <Text style={styles.hint}>Format: AAAA-MM-JJ (ex: 2024-12-16)</Text>
           </View>
-
           {/* Status */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Statut *</Text>

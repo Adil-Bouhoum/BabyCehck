@@ -9,15 +9,15 @@ import {
   Alert,
   ScrollView,
   SafeAreaView,
-  Platform,
 } from "react-native";
+import DatePickerField from "../components/DatePickerField";
 import { babyService } from "../services/babyService";
 
 export default function AddBabyScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    birth_date: new Date().toISOString().split("T")[0], // Date du jour
+    birth_date: new Date().toISOString().split("T")[0],
     gender: "male",
     birth_weight: "",
     birth_height: "",
@@ -66,6 +66,12 @@ export default function AddBabyScreen({ navigation }) {
     }
   };
 
+  // Max date for birth date (today)
+  const maxDate = new Date();
+  // Min date (100 years ago - very conservative)
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 100);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -82,7 +88,9 @@ export default function AddBabyScreen({ navigation }) {
         <View style={styles.form}>
           {/* Nom */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nom du bébé *</Text>
+            <Text style={styles.label}>
+              Nom du bébé <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Ex: Lucas, Emma..."
@@ -93,22 +101,26 @@ export default function AddBabyScreen({ navigation }) {
             />
           </View>
 
-          {/* Date de naissance */}
+          {/* Date de naissance avec DatePickerField */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date de naissance *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="AAAA-MM-JJ"
+            <DatePickerField
+              label="Date de naissance"
               value={form.birth_date}
-              onChangeText={(text) => setForm({ ...form, birth_date: text })}
+              onChange={(date) => setForm({ ...form, birth_date: date })}
+              placeholder="Sélectionner une date..."
+              hint="Tap to select from calendar"
+              required={true}
               editable={!loading}
+              minDate={minDate}
+              maxDate={maxDate}
             />
-            <Text style={styles.hint}>Format: AAAA-MM-JJ (ex: 2024-12-16)</Text>
           </View>
 
           {/* Genre */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Genre *</Text>
+            <Text style={styles.label}>
+              Genre <Text style={styles.required}>*</Text>
+            </Text>
             <View style={styles.genderContainer}>
               {[
                 { value: "male", label: "👦 Garçon" },
@@ -254,6 +266,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2c3e50",
     marginBottom: 8,
+  },
+  required: {
+    color: "#e74c3c",
   },
   input: {
     borderWidth: 1.5,

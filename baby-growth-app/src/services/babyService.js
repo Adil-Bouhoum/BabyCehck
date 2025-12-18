@@ -1,4 +1,4 @@
-// baby-growth-app/src/services/babyService.js (Updated)
+// baby-growth-app/src/services/babyService.js
 import api from "./api";
 
 export const babyService = {
@@ -266,6 +266,36 @@ export const babyService = {
       return {
         success: false,
         message: error.response?.data?.message || "Erreur de suppression",
+      };
+    }
+  },
+
+  // ============= VACCINATION STATUS UPDATE =============
+  async updateVaccinationStatus(babyId, vaccinationId, statusData) {
+    try {
+      console.log("🔄 Mise à jour statut vaccination:", {
+        babyId,
+        vaccinationId,
+        statusData,
+      });
+
+      const response = await api.patch(
+        `/babies/${babyId}/vaccinations/${vaccinationId}/status`,
+        statusData
+      );
+
+      return {
+        success: true,
+        vaccination: response.data.data || response.data.vaccination,
+        message: response.data.message,
+      };
+    } catch (error) {
+      console.error("❌ Erreur updateVaccinationStatus:", error);
+      return {
+        success: false,
+        errors: error.response?.data?.errors,
+        message:
+          error.response?.data?.message || "Erreur lors de la mise à jour",
       };
     }
   },

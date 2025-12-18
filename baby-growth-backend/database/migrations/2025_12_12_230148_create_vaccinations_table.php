@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('dose_number')->default(1);
             $table->date('vaccination_date');
             $table->date('due_date')->nullable();
-            $table->enum('status', ['scheduled', 'completed', 'overdue'])->default('scheduled');
+            $table->enum('status', ['scheduled', 'completed', 'overdue', 'cancelled'])->default('scheduled');
             $table->text('notes')->nullable();
             $table->string('lot_number')->nullable();
             $table->string('clinic')->nullable();

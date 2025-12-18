@@ -169,16 +169,18 @@ class VaccinationController extends Controller
 
             for ($doseNum = 1; $doseNum <= $vaccine->doses; $doseNum++) {
                 $recommendedDate = $this->calculateRecommendedDate($baby, $vaccine, $doseNum);
+                // Find the vaccination record for this dose
                 $administered = $administeredDoses->firstWhere('dose_number', $doseNum);
 
                 if ($administered) {
-                    $status = 'completed';
+                    // Use the actual status from the database
+                    $status = $administered->status;
                 } else {
                     $status = $recommendedDate->isPast() ? 'overdue' : 'scheduled';
                 }
 
                 $calendar[] = [
-                    'id' => $administered?->id,
+                    'id' => $administered?->id,  // This will be the Vaccination model's ID if it exists
                     'vaccine_id' => $vaccine->id,
                     'vaccine_name' => $vaccine->display_name,
                     'description' => $vaccine->description,
@@ -191,7 +193,8 @@ class VaccinationController extends Controller
                     'is_custom' => false,
                     'notes' => $administered?->notes,
                     'lot_number' => $administered?->lot_number,
-                    'clinic' => $administered?->clinic
+                    'clinic' => $administered?->clinic,
+                    'standard_vaccine_id' => $vaccine->id  // Include for reference
                 ];
             }
         }
@@ -211,7 +214,7 @@ class VaccinationController extends Controller
                 'total_doses' => 1,
                 'recommended_date' => null,
                 'vaccination_date' => $vaccine->vaccination_date->format('Y-m-d'),
-                'status' => 'completed',
+                'status' => $vaccine->status,
                 'is_mandatory' => false,
                 'is_custom' => true,
                 'notes' => $vaccine->notes,
@@ -262,7 +265,8 @@ class VaccinationController extends Controller
         return response()->json([
             'status' => 'success',
             'baby_age_months' => $ageMonths,
-            'recommended_vaccines' => $recommended
+            'recommended' => $recommended,
+            'data' => $recommended
         ]);
     }
 
@@ -372,5 +376,63 @@ class VaccinationController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Update vaccination status
+     */
+    public function updateStatus(Request $request, Baby $baby, Vaccination $vaccination)
+    {
+        // Vérification d'appartenance
+        if ($vaccination->baby_id !== $baby->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vaccination does not belong to this baby'
+            ], 403);
+        }
+
+        // Validation
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:scheduled,completed,cancelled',
+            'vaccination_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Préparation des données de mise à jour
+        $updateData = ['status' => $request->status];
+
+        // Gestion des dates selon le statut
+        if ($request->has('vaccination_date') && $request->vaccination_date) {
+            $updateData['vaccination_date'] = $request->vaccination_date;
+        }
+
+        if ($request->has('due_date') && $request->due_date) {
+            $updateData['due_date'] = $request->due_date;
+        }
+
+        // Ajouter les notes si fournies
+        if ($request->has('notes')) {
+            $updateData['notes'] = $request->notes;
+        }
+
+        // Mise à jour
+        $vaccination->update($updateData);
+
+        // Recharger avec les relations
+        $vaccination->load('standardVaccine');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Vaccination status updated successfully',
+            'data' => $this->formatVaccination($vaccination)
+        ]);
     }
 }
