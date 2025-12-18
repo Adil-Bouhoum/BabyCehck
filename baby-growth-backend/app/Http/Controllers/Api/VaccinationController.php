@@ -5,20 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Baby;
 use App\Models\Vaccination;
+use App\Models\StandardVaccine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Models\StandardVaccine;
 use Carbon\Carbon;
-
 
 class VaccinationController extends Controller
 {
-    // Récupérer toutes les vaccinations d'un bébé
+    /**
+     * Get all vaccinations for a baby
+     */
     public function index(Baby $baby)
     {
         $vaccinations = $baby->vaccinations()
+            ->with('standardVaccine')
             ->orderBy('vaccination_date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($vax) {
+                return $this->formatVaccination($vax);
+            });
 
         return response()->json([
             'status' => 'success',
@@ -26,14 +31,14 @@ class VaccinationController extends Controller
         ]);
     }
 
-    // Ajouter une vaccination
+    /**
+     * Create a custom vaccination
+     */
     public function store(Request $request, Baby $baby)
     {
         $validator = Validator::make($request->all(), [
             'vaccine_name' => 'required|string|max:100',
             'vaccination_date' => 'required|date',
-            'due_date' => 'nullable|date|after:vaccination_date',
-            'status' => 'required|in:scheduled,completed,overdue',
             'notes' => 'nullable|string',
             'lot_number' => 'nullable|string|max:50',
             'clinic' => 'nullable|string|max:100'
@@ -49,36 +54,36 @@ class VaccinationController extends Controller
         $vaccination = $baby->vaccinations()->create([
             'vaccine_name' => $request->vaccine_name,
             'vaccination_date' => $request->vaccination_date,
-            'due_date' => $request->due_date,
-            'status' => $request->status,
+            'dose_number' => 1,
+            'status' => 'completed',
             'notes' => $request->notes,
             'lot_number' => $request->lot_number,
-            'clinic' => $request->clinic
+            'clinic' => $request->clinic,
+            'standard_vaccine_id' => null // Custom vaccination
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Vaccination ajoutée avec succès',
-            'data' => $vaccination
+            'message' => 'Vaccination added successfully',
+            'data' => $this->formatVaccination($vaccination)
         ], 201);
     }
 
-    // Mettre à jour une vaccination
+    /**
+     * Update a vaccination
+     */
     public function update(Request $request, Baby $baby, Vaccination $vaccination)
     {
-        // Vérifier que la vaccination appartient bien au bébé
         if ($vaccination->baby_id !== $baby->id) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cette vaccination ne correspond pas au bébé'
-            ], 404);
+                'message' => 'Vaccination does not belong to this baby'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
             'vaccine_name' => 'sometimes|required|string|max:100',
             'vaccination_date' => 'sometimes|required|date',
-            'due_date' => 'nullable|date|after:vaccination_date',
-            'status' => 'sometimes|required|in:scheduled,completed,overdue',
             'notes' => 'nullable|string',
             'lot_number' => 'nullable|string|max:50',
             'clinic' => 'nullable|string|max:100'
@@ -94,8 +99,6 @@ class VaccinationController extends Controller
         $vaccination->update($request->only([
             'vaccine_name',
             'vaccination_date',
-            'due_date',
-            'status',
             'notes',
             'lot_number',
             'clinic'
@@ -103,136 +106,126 @@ class VaccinationController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Vaccination mise à jour avec succès',
-            'data' => $vaccination
+            'message' => 'Vaccination updated successfully',
+            'data' => $this->formatVaccination($vaccination)
         ]);
     }
 
-    // Supprimer une vaccination
-    public function destroy(Baby $baby, Vaccination $vaccination)
+    /**
+     * Show a single vaccination
+     */
+    public function show(Baby $baby, Vaccination $vaccination)
     {
-        // Vérifier que la vaccination appartient bien au bébé
         if ($vaccination->baby_id !== $baby->id) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cette vaccination ne correspond pas au bébé'
-            ], 404);
+                'message' => 'Vaccination does not belong to this baby'
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $this->formatVaccination($vaccination->load('standardVaccine'))
+        ]);
+    }
+
+    /**
+     * Delete a vaccination
+     */
+    public function destroy(Baby $baby, Vaccination $vaccination)
+    {
+        if ($vaccination->baby_id !== $baby->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vaccination does not belong to this baby'
+            ], 403);
         }
 
         $vaccination->delete();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Vaccination supprimée avec succès'
+            'message' => 'Vaccination deleted successfully'
         ]);
     }
 
-    // Calendrier des vaccinations
+    /**
+     * Get vaccination calendar with all planned and administered doses
+     */
     public function calendar(Baby $baby)
     {
-        // 1. Récupérer tous les vaccins standard
+        $babyAgeMonths = $baby->birth_date->diffInMonths(now());
         $standardVaccines = StandardVaccine::orderBy('recommended_age_months')->get();
-
-        // 2. Récupérer les vaccins déjà administrés AVEC la relation
         $administeredVaccines = $baby->vaccinations()
-            ->with('standardVaccine')
-            ->get();
+            ->whereNotNull('standard_vaccine_id')
+            ->get()
+            ->groupBy('standard_vaccine_id');
 
-        // 3. Créer un tableau pour les doses administrées par vaccin standard
-        $administeredByStandard = [];
-        foreach ($administeredVaccines as $vax) {
-            if ($vax->standard_vaccine_id) {
-                if (!isset($administeredByStandard[$vax->standard_vaccine_id])) {
-                    $administeredByStandard[$vax->standard_vaccine_id] = [];
-                }
-                $administeredByStandard[$vax->standard_vaccine_id][] = $vax;
-            }
-        }
-
-        // 4. Générer le calendrier
         $calendar = [];
-        $today = now();
 
-        foreach ($standardVaccines as $standard) {
-            $administered = $administeredByStandard[$standard->id] ?? [];
-            $completedDoses = count($administered);
+        // Generate calendar entries for each standard vaccine
+        foreach ($standardVaccines as $vaccine) {
+            $administeredDoses = $administeredVaccines[$vaccine->id] ?? collect();
 
-            // Pour chaque dose de ce vaccin
-            for ($dose = 1; $dose <= $standard->doses; $dose++) {
-                // Calculer la date recommandée
-                $recommendedDate = $baby->birth_date->addMonths($standard->recommended_age_months);
-                if ($standard->days_between_doses && $dose > 1) {
-                    $recommendedDate = $recommendedDate->addDays(($dose - 1) * $standard->days_between_doses);
-                }
+            for ($doseNum = 1; $doseNum <= $vaccine->doses; $doseNum++) {
+                $recommendedDate = $this->calculateRecommendedDate($baby, $vaccine, $doseNum);
+                $administered = $administeredDoses->firstWhere('dose_number', $doseNum);
 
-                // Chercher si cette dose est déjà administrée
-                $administeredDose = null;
-                foreach ($administered as $vax) {
-                    if ($vax->dose_number == $dose) {
-                        $administeredDose = $vax;
-                        break;
-                    }
-                }
-
-                // Déterminer le statut
-                if ($administeredDose) {
+                if ($administered) {
                     $status = 'completed';
-                    $actualDate = $administeredDose->vaccination_date;
                 } else {
-                    if ($recommendedDate->isPast()) {
-                        $status = 'overdue';
-                    } else {
-                        $status = 'scheduled';
-                    }
-                    $actualDate = null;
+                    $status = $recommendedDate->isPast() ? 'overdue' : 'scheduled';
                 }
 
                 $calendar[] = [
-                    'standard_vaccine_id' => $standard->id,
-                    'vaccine_name' => $standard->display_name,
-                    'dose_number' => $dose,
-                    'total_doses' => $standard->doses,
+                    'id' => $administered?->id,
+                    'vaccine_id' => $vaccine->id,
+                    'vaccine_name' => $vaccine->display_name,
+                    'description' => $vaccine->description,
+                    'dose_number' => $doseNum,
+                    'total_doses' => $vaccine->doses,
                     'recommended_date' => $recommendedDate->format('Y-m-d'),
+                    'vaccination_date' => $administered?->vaccination_date?->format('Y-m-d'),
                     'status' => $status,
-                    'actual_date' => $actualDate ? $actualDate->format('Y-m-d') : null,
-                    'is_mandatory' => (bool)$standard->is_mandatory,
-                    'description' => $standard->description,
-                    'age_months' => $standard->recommended_age_months,
-                    'is_custom' => false
+                    'is_mandatory' => (bool) $vaccine->is_mandatory,
+                    'is_custom' => false,
+                    'notes' => $administered?->notes,
+                    'lot_number' => $administered?->lot_number,
+                    'clinic' => $administered?->clinic
                 ];
             }
         }
 
-        // 5. Ajouter les vaccins personnalisés
+        // Add custom vaccinations
         $customVaccines = $baby->vaccinations()
             ->whereNull('standard_vaccine_id')
-            ->get()
-            ->map(function ($vaccine) {
-                return [
-                    'id' => $vaccine->id,
-                    'vaccine_name' => $vaccine->vaccine_name,
-                    'dose_number' => $vaccine->dose_number,
-                    'total_doses' => 1,
-                    'recommended_date' => $vaccine->due_date ? $vaccine->due_date->format('Y-m-d') : null,
-                    'status' => $vaccine->status,
-                    'actual_date' => $vaccine->vaccination_date ? $vaccine->vaccination_date->format('Y-m-d') : null,
-                    'is_mandatory' => false,
-                    'description' => 'Vaccin personnalisé',
-                    'is_custom' => true
-                ];
-            })->toArray();
+            ->get();
 
-        $calendar = array_merge($calendar, $customVaccines);
+        foreach ($customVaccines as $vaccine) {
+            $calendar[] = [
+                'id' => $vaccine->id,
+                'vaccine_id' => null,
+                'vaccine_name' => $vaccine->vaccine_name,
+                'description' => null,
+                'dose_number' => 1,
+                'total_doses' => 1,
+                'recommended_date' => null,
+                'vaccination_date' => $vaccine->vaccination_date->format('Y-m-d'),
+                'status' => 'completed',
+                'is_mandatory' => false,
+                'is_custom' => true,
+                'notes' => $vaccine->notes,
+                'lot_number' => $vaccine->lot_number,
+                'clinic' => $vaccine->clinic
+            ];
+        }
 
-        // Trier par date recommandée
+        // Sort by date (vaccination date if exists, otherwise recommended date)
         usort($calendar, function ($a, $b) {
-            $dateA = $a['actual_date'] ?? $a['recommended_date'];
-            $dateB = $b['actual_date'] ?? $b['recommended_date'];
+            $dateA = $a['vaccination_date'] ?? $a['recommended_date'];
+            $dateB = $b['vaccination_date'] ?? $b['recommended_date'];
 
-            if (!$dateA && !$dateB) return 0;
-            if (!$dateA) return 1;
-            if (!$dateB) return -1;
-
+            if (!$dateA || !$dateB) return 0;
             return strtotime($dateA) <=> strtotime($dateB);
         });
 
@@ -240,37 +233,41 @@ class VaccinationController extends Controller
             'status' => 'success',
             'baby_name' => $baby->name,
             'baby_birth_date' => $baby->birth_date->format('Y-m-d'),
-            'baby_age_months' => $baby->birth_date->diffInMonths($today),
+            'baby_age_months' => $babyAgeMonths,
             'calendar' => $calendar
         ]);
     }
 
     /**
-     * Obtenir la liste des vaccins recommandés pour l'âge actuel
+     * Get recommended vaccinations for the baby's current age
      */
     public function recommended(Baby $baby)
     {
-        $ageMonths = $baby->birth_date->diffInMonths(Carbon::now());
+        $ageMonths = $baby->birth_date->diffInMonths(now());
 
+        // Get vaccines that should have been done by now but haven't been
         $recommended = StandardVaccine::where('recommended_age_months', '<=', $ageMonths)
-            ->whereNotIn('id', function ($query) use ($baby) {
-                $query->select('standard_vaccine_id')
-                    ->from('vaccinations')
-                    ->where('baby_id', $baby->id)
-                    ->whereNotNull('standard_vaccine_id');
+            ->get()
+            ->filter(function ($vaccine) use ($baby) {
+                // Check if all doses have been completed
+                $administeredDoses = $baby->vaccinations()
+                    ->where('standard_vaccine_id', $vaccine->id)
+                    ->where('status', 'completed')
+                    ->count();
+
+                return $administeredDoses < $vaccine->doses;
             })
-            ->orderBy('recommended_age_months')
-            ->get();
+            ->values();
 
         return response()->json([
             'status' => 'success',
-            'age_months' => $ageMonths,
+            'baby_age_months' => $ageMonths,
             'recommended_vaccines' => $recommended
         ]);
     }
 
     /**
-     * Ajouter un vaccin depuis la liste standard
+     * Add a standard vaccine dose
      */
     public function addFromStandard(Request $request, Baby $baby)
     {
@@ -292,19 +289,31 @@ class VaccinationController extends Controller
 
         $standard = StandardVaccine::find($request->standard_vaccine_id);
 
-        // Vérifier que la dose est valide
+        // Validate dose number
         if ($request->dose_number > $standard->doses) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Numéro de dose invalide pour ce vaccin'
+                'message' => "Invalid dose number. This vaccine requires {$standard->doses} dose(s)."
+            ], 422);
+        }
+
+        // Check if this dose was already administered
+        $existing = $baby->vaccinations()
+            ->where('standard_vaccine_id', $standard->id)
+            ->where('dose_number', $request->dose_number)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dose ' . $request->dose_number . ' for this vaccine is already recorded.'
             ], 422);
         }
 
         $vaccination = $baby->vaccinations()->create([
-            'standard_vaccine_id' => $request->standard_vaccine_id,
+            'standard_vaccine_id' => $standard->id,
             'vaccine_name' => $standard->display_name,
             'vaccination_date' => $request->vaccination_date,
-            'due_date' => null, // Pas besoin pour les vaccins standard administrés
             'dose_number' => $request->dose_number,
             'status' => 'completed',
             'notes' => $request->notes,
@@ -314,8 +323,54 @@ class VaccinationController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Vaccin ajouté avec succès',
-            'data' => $vaccination
+            'message' => 'Vaccination recorded successfully',
+            'data' => $this->formatVaccination($vaccination->load('standardVaccine'))
         ], 201);
+    }
+
+    /**
+     * Calculate recommended date for a vaccine dose
+     */
+    private function calculateRecommendedDate(Baby $baby, StandardVaccine $vaccine, int $doseNumber): Carbon
+    {
+        $baseDate = $baby->birth_date->copy()->addMonths($vaccine->recommended_age_months);
+
+        if ($doseNumber > 1 && $vaccine->days_between_doses) {
+            $baseDate->addDays(($doseNumber - 1) * $vaccine->days_between_doses);
+        }
+
+        return $baseDate;
+    }
+
+    /**
+     * Format vaccination for API response
+     */
+    private function formatVaccination(Vaccination $vax): array
+    {
+        $data = [
+            'id' => $vax->id,
+            'vaccine_name' => $vax->vaccine_name,
+            'vaccination_date' => $vax->vaccination_date->format('Y-m-d'),
+            'dose_number' => $vax->dose_number,
+            'status' => $vax->status,
+            'notes' => $vax->notes,
+            'lot_number' => $vax->lot_number,
+            'clinic' => $vax->clinic,
+            'is_custom' => is_null($vax->standard_vaccine_id),
+        ];
+
+        if ($vax->standardVaccine) {
+            $data['is_custom'] = false;
+            $data['vaccine_id'] = $vax->standardVaccine->id;
+            $data['total_doses'] = $vax->standardVaccine->doses;
+            $data['is_mandatory'] = $vax->standardVaccine->is_mandatory;
+            $data['full_name'] = "{$vax->vaccine_name} (Dose {$vax->dose_number}/{$vax->standardVaccine->doses})";
+        } else {
+            $data['total_doses'] = 1;
+            $data['is_mandatory'] = false;
+            $data['full_name'] = $vax->vaccine_name;
+        }
+
+        return $data;
     }
 }

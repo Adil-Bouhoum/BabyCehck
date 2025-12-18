@@ -8,53 +8,56 @@ use App\Http\Controllers\Api\VaccinationController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\MealPlanController;
 
-// Route de test
+// Health check
 Route::get('/test', function () {
     return response()->json([
         'status' => 'success',
-        'message' => 'API BabyCheck fonctionne!',
+        'message' => 'BabyCheck API is running!',
         'timestamp' => now()
     ]);
 });
 
-// Authentification (publiques)
+// Public authentication routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Routes protégées par authentification
+// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Authentification
+    // Auth endpoints
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Gestion des bébés (CRUD)
+    // Baby management
     Route::apiResource('babies', BabyController::class);
 
-    // Routes imbriquées pour chaque bébé
+    // Nested routes for each baby
     Route::prefix('babies/{baby}')->group(function () {
-        // Croissance (poids/taille/BMI)
+        // Growth tracking
         Route::apiResource('growth-records', GrowthController::class);
         Route::get('growth-records/stats/summary', [GrowthController::class, 'summary']);
         Route::get('growth-records/stats/bmi', [GrowthController::class, 'bmiHistory']);
 
-        // Vaccinations
-        Route::apiResource('vaccinations', VaccinationController::class);
+        // Vaccinations - Custom routes BEFORE resource to avoid conflicts
         Route::get('vaccinations/calendar', [VaccinationController::class, 'calendar']);
+        Route::get('vaccinations/recommended', [VaccinationController::class, 'recommended']);
+        Route::post('vaccinations/from-standard', [VaccinationController::class, 'addFromStandard']);
+        Route::apiResource('vaccinations', VaccinationController::class);
 
-        // Dossiers médicaux
+        // Medical records
         Route::apiResource('medical-records', MedicalRecordController::class);
         Route::get('medical-records/stats', [MedicalRecordController::class, 'stats']);
 
-        // Planning repas
+        // Meal planning
         Route::apiResource('meal-plans', MealPlanController::class);
         Route::get('meal-plans/day/{date}', [MealPlanController::class, 'getByDate']);
     });
 });
 
-// Fallback pour routes non trouvées
+// 404 handler
 Route::fallback(function () {
     return response()->json([
-        'error' => 'Route non trouvée',
-        'message' => 'Vérifiez l\'URL de votre requête'
+        'status' => 'error',
+        'message' => 'Route not found',
+        'path' => request()->path()
     ], 404);
 });
