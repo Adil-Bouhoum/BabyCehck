@@ -60,6 +60,23 @@ Application mobile complète de suivi de croissance et de santé pour bébés, d
 
 ## Screenshots
 ![image](./DemoPics/1.jfif)
+![image](./DemoPics/2.jfif)
+![image](./DemoPics/3.jfif)
+![image](./DemoPics/4.jfif)
+![image](./DemoPics/5.jfif)
+![image](./DemoPics/6.jfif)
+![image](./DemoPics/7.jfif)
+![image](./DemoPics/8.jfif)
+![image](./DemoPics/9.jfif)
+![image](./DemoPics/10.jfif)
+![image](./DemoPics/11.jfif)
+![image](./DemoPics/12.jfif)
+![image](./DemoPics/13.jfif)
+![image](./DemoPics/14.jfif)
+![image](./DemoPics/15.jfif)
+![image](./DemoPics/16.jfif)
+![image](./DemoPics/17.jfif)
+![image](./DemoPics/18.jfif)
 
 
 ## 🏗️ Architecture
