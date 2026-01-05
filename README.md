@@ -64,13 +64,64 @@ Application mobile complète de suivi de croissance et de santé pour bébés, d
 BabyCheck/
 ├── baby-growth-backend/              # API REST Laravel
 │   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Models/
-│   │   └── Traits/
-│   ├── routes/api.php
-│   ├── database/migrations/
-│   ├── config/
-│   └── .env.example
+│   │   ├── Http/
+│   │   │   ├── Controllers/
+│   │   │   │   └── Api/            # Contrôleurs API
+│   │   │   │       └── Controller.php
+│   │   │   └── Middleware/         # Middlewares personnalisés
+│   │   │
+│   │   ├── Models/                 # Modèles Eloquent
+│   │   │   ├── Appointment.php
+│   │   │   ├── Baby.php
+│   │   │   ├── FoodIntroduction.php
+│   │   │   ├── GrowthRecord.php
+│   │   │   ├── MealPlan.php
+│   │   │   ├── MedicalRecord.php
+│   │   │   ├── Milestone.php
+│   │   │   ├── StandardVaccine.php
+│   │   │   ├── User.php
+│   │   │   └── Vaccination.php
+│   │   │
+│   │   ├── Observers/              # Observateurs de modèles
+│   │   │   └── BabyObserver.php
+│   │   │
+│   │   └── Providers/              # Service providers
+│   │       ├── AppServiceProvider.php
+│   │       └── RouteServiceProvider.php
+│   │
+│   ├── bootstrap/
+│   │   ├── cache/
+│   │   ├── app.php
+│   │   └── providers.php
+│   │
+│   ├── config/                     # Configuration applicative
+│   │
+│   ├── database/
+│   │   ├── factories/              # Model factories pour tests
+│   │   ├── migrations/             # Migrations de base de données
+│   │   └── seeders/                # Seeders de données
+│   │
+│   ├── public/                     # Fichiers publics
+│   │
+│   ├── resources/                  # Ressources (vues, traductions)
+│   │
+│   ├── routes/                     # Définition des routes
+│   │   └── api.php                # Routes API
+│   │
+│   ├── storage/                    # Stockage fichiers et logs
+│   │   ├── logs/
+│   │   └── app/
+│   │
+│   ├── tests/                      # Tests automatisés
+│   │
+│   ├── vendor/                     # Dépendances Composer
+│   │
+│   ├── .env.example               # Exemple configuration
+│   ├── .gitignore
+│   ├── artisan                     # CLI Laravel
+│   ├── composer.json               # Dépendances PHP
+│   ├── composer.lock
+│   └── app.php
 │
 └── baby-growth-app/                  # Application React Native
     ├── src/
