@@ -74,19 +74,50 @@ BabyCheck/
 │
 └── baby-growth-app/                  # Application React Native
     ├── src/
-    │   ├── screens/
+    │   ├── components/               # Composants réutilisables
+    │   │   ├── DateTextField.js
+    │   │   ├── VaccinationCalendarItem.js
+    │   │   ├── VaccinationListItem.js
+    │   │   └── VaccinationStatusModal.js
+    │   │
+    │   ├── hooks/                    # Custom React hooks
+    │   │   └── useVaccinationLogic.js
+    │   │
+    │   ├── screens/                  # Écrans principaux
     │   │   ├── LoginScreen.js
     │   │   ├── RegisterScreen.js
     │   │   ├── DashboardScreen.js
-    │   │   ├── BabyDetailScreen.js
     │   │   ├── AddBabyScreen.js
-    │   │   └── [autres écrans]
-    │   ├── services/
-    │   │   ├── api.js
-    │   │   └── auth.js
-    │   └── navigation/
-    ├── App.js
-    └── package.json
+    │   │   ├── EditBabyScreen.js
+    │   │   ├── BabyDetailScreen.js
+    │   │   ├── AddGrowthScreen.js
+    │   │   ├── AddMealScreen.js
+    │   │   ├── AddMedicalRecordScreen.js
+    │   │   ├── AddVaccinationScreen.js
+    │   │   ├── MedicalRecordsScreen.js
+    │   │   ├── StorageTestScreen.js
+    │   │   ├── TestConnectionScreen.js
+    │   │   ├── TestScreen.js
+    │   │   └── VaccinationScreen.js
+    │   │
+    │   ├── services/                 # Services API et utilitaires
+    │   │   ├── api.js               # Configuration Axios
+    │   │   ├── auth.js              # Service authentification
+    │   │   └── babyService.js       # Service gestion bébés
+    │   │
+    │   ├── theme/                    # Thème et styles globaux
+    │   ├── utils/                    # Fonctions utilitaires
+    │   │
+    │   ├── App.js                    # Point d'entrée principal
+    │   ├── app.json                  # Configuration Expo
+    │   └── package.json              # Dépendances
+    │
+    └── Fichiers config
+        ├── .gitignore
+        ├── index.js
+        ├── metro.config.js
+        ├── package-lock.json
+        └── package.json
 ```
 
 ---
