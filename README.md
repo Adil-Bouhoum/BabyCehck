@@ -1,8 +1,8 @@
 # 🍼 BabyCheck - Suivi de Croissance des Bébés
 
-Application mobile de suivi de croissance et de santé pour bébés, développée avec **React Native (Expo)** et **Laravel**.
+Application mobile complète de suivi de croissance et de santé pour bébés, développée avec **React Native (Expo)** et **Laravel**.
 
-![Status](https://img.shields.io/badge/status-en%20développement-yellow)
+![Status](https://img.shields.io/badge/status-complet-brightgreen)
 ![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue)
 ![Laravel](https://img.shields.io/badge/Laravel-12-red)
 
@@ -10,22 +10,51 @@ Application mobile de suivi de croissance et de santé pour bébés, développé
 
 ## 📱 Fonctionnalités
 
-### ✅ Implémentées (Jour 2/7)
+### ✅ Implémentées
 
-- Authentification complète (inscription, connexion, déconnexion)
-- Dashboard utilisateur
+**Authentification & Gestion Utilisateur**
+- Inscription et connexion sécurisées
 - Gestion de session avec tokens JWT (Sanctum)
-- Interface mobile responsive
+- Déconnexion avec confirmation
+- Récupération des informations utilisateur
 
-### 🔜 À venir (Jours 3-7)
+**Gestion des Bébés**
+- Ajouter et gérer plusieurs bébés
+- Enregistrer les informations à la naissance (poids, taille)
+- Modifier et supprimer les profils
+- Affichage de l'âge en mois automatique
 
-- Gestion multi-bébés
-- Suivi de croissance (poids, taille) avec graphiques
-- Calendrier de vaccination
-- Rendez-vous pédiatriques
-- Introduction alimentaire par âge
-- Étapes de développement (milestones)
-- Notifications de rappel
+**Suivi de Croissance**
+- Enregistrement des mesures (poids, taille, périmètre crânien)
+- Historique complet des mesures
+- Calcul automatique de l'IMC (BMI)
+- Statistiques de croissance (gain poids/taille par mois)
+- Visualisation des tendances
+
+**Gestion des Vaccinations**
+- Calendrier vaccinal intelligent et adapté à l'âge
+- Vaccins standards recommandés ou personnalisés
+- Statuts de suivi : programmé, complété, en retard
+- Enregistrement des informations détaillées (lot, clinique, notes)
+- Historique des vaccinations administrées
+
+**Dossier Médical**
+- Enregistrement des maladies et conditions
+- Suivi des médicaments et traitements
+- Documentation des symptômes et observations
+- Statuts : en cours, résolu
+
+**Alimentation & Planning**
+- Planification des repas (petit-déjeuner, déjeuner, goûter, dîner)
+- Suivi de l'introduction alimentaire par âge
+- Notes sur les réactions et préférences
+- Vue groupée par type de repas
+
+**Interface Mobile**
+- Navigation intuitive avec onglets
+- Design responsive et adapté aux appareils mobiles
+- Interface utilisateur moderne et accessible
+- Gestion des erreurs et feedback utilisateur
 
 ---
 
@@ -33,16 +62,29 @@ Application mobile de suivi de croissance et de santé pour bébés, développé
 
 ```
 BabyCheck/
-├── baby-growth-backend/    # API Laravel
+├── baby-growth-backend/              # API REST Laravel
 │   ├── app/
+│   │   ├── Http/Controllers/
+│   │   ├── Models/
+│   │   └── Traits/
 │   ├── routes/api.php
 │   ├── database/migrations/
+│   ├── config/
 │   └── .env.example
 │
-└── baby-growth-app/        # App React Native
+└── baby-growth-app/                  # Application React Native
     ├── src/
     │   ├── screens/
-    │   └── services/
+    │   │   ├── LoginScreen.js
+    │   │   ├── RegisterScreen.js
+    │   │   ├── DashboardScreen.js
+    │   │   ├── BabyDetailScreen.js
+    │   │   ├── AddBabyScreen.js
+    │   │   └── [autres écrans]
+    │   ├── services/
+    │   │   ├── api.js
+    │   │   └── auth.js
+    │   └── navigation/
     ├── App.js
     └── package.json
 ```
@@ -94,7 +136,7 @@ cd baby-growth-app
 npm install
 
 # Configurer l'IP du serveur dans src/services/api.js
-# Remplacer 192.168.1.162 par votre IP locale
+# Remplacer par votre IP locale si nécessaire
 
 # Démarrer l'application
 npx expo start
@@ -104,28 +146,16 @@ Scanner le QR code avec l'app **Expo Go** sur votre téléphone.
 
 ---
 
-## 🔧 Configuration réseau (Windows)
-
-Pour tester sur téléphone physique, autoriser le port Laravel dans le pare-feu :
-
-```powershell
-# PowerShell en administrateur
-netsh advfirewall firewall add rule name="Laravel Dev Server" dir=in action=allow protocol=TCP localport=8000
-```
-
----
-
 ## 🗄️ Base de données
 
 ### Tables principales
 
 - `users` - Utilisateurs
 - `babies` - Bébés enregistrés
-- `growth_records` - Historique poids/taille
-- `vaccinations` - Calendrier vaccinal
-- `appointments` - Rendez-vous médicaux
-- `food_introductions` - Alimentation
-- `milestones` - Étapes de développement
+- `growth_records` - Historique poids/taille/IMC
+- `vaccinations` - Calendrier vaccinal et vaccins administrés
+- `medical_records` - Maladies et médicaments
+- `meal_plans` - Planification alimentaire
 
 ---
 
@@ -133,7 +163,7 @@ netsh advfirewall firewall add rule name="Laravel Dev Server" dir=in action=allo
 
 API sécurisée avec **Laravel Sanctum** (token-based).
 
-### Endpoints disponibles
+### Endpoints principales
 
 ```
 POST /api/register          # Inscription
@@ -148,16 +178,17 @@ GET  /api/user              # Infos utilisateur (protégé)
 
 ### Backend
 
-- Laravel 12
-- Laravel Sanctum (authentification API)
-- MySQL
+- **Laravel 12** - Framework PHP moderne
+- **Laravel Sanctum** - Authentification API token-based
+- **MySQL** - Base de données relationnelle
 
 ### Frontend
 
-- React Native (Expo SDK 54)
-- React Navigation v6
-- Axios (requêtes HTTP)
-- AsyncStorage (stockage local)
+- **React Native 0.81.5** - Framework mobile multi-plateforme
+- **Expo SDK 54** - Plateforme de développement React Native
+- **React Navigation v6** - Navigation entre écrans
+- **Axios** - Client HTTP pour requêtes API
+- **AsyncStorage** - Stockage local persistant
 
 ---
 
@@ -170,25 +201,12 @@ GET  /api/user              # Infos utilisateur (protégé)
 - Danger : `#e74c3c` (Rouge)
 - Fond : `#f8f9fa`
 
----
+**Principes de design :**
 
-## 📋 Roadmap
-
-- [x] Setup environnement complet
-- [x] API d'authentification
-- [x] Écrans Login/Register/Dashboard
-- [ ] CRUD Bébés
-- [ ] Suivi de croissance
-- [ ] Vaccinations
-- [ ] Rendez-vous
-- [ ] Alimentation
-- [ ] Notifications
-
----
-
-## 🐛 Problèmes connus
-
-Voir le fichier `specs.txt` pour la liste complète des problèmes résolus.
+- Interface intuitive et responsive
+- Navigation simple et fluide
+- Feedback utilisateur clair
+- Accessibilité optimale
 
 ---
 
@@ -200,18 +218,16 @@ Projet académique - Tous droits réservés
 
 ## 👨‍💻 Auteur
 
-Développé dans le cadre d'un projet de développement mobile (7 jours).
-
-**Contact :** [Votre email/GitHub]
+Application développée comme projet mobile complet avec backend et frontend intégrés.
 
 ---
 
 ## 🙏 Remerciements
 
 - Documentation Laravel
-- Documentation React Native
-- Communauté Expo
+- Documentation React Native & Expo
+- Communauté React Native
 
 ---
 
-**Dernière mise à jour :** 13 décembre 2024
+**Statut du projet :** ✅ Complet et fonctionnel
